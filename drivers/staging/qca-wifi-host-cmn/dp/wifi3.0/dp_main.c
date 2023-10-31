@@ -10776,40 +10776,6 @@ dp_txrx_post_data_stall_event(struct cdp_soc_t *soc_hdl,
 }
 #endif /* WLAN_SUPPORT_DATA_STALL */
 
-#ifdef DP_PEER_EXTENDED_API
-/**
- * dp_peer_get_ref_find_by_addr - get peer with addr by ref count inc
- * @dev: physical device instance
- * @peer_mac_addr: peer mac address
- * @debug_id: to track enum peer access
- *
- * Return: peer instance pointer
- */
-static void *
-dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
-			     enum peer_debug_id_type debug_id)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)dev;
-	struct dp_peer *peer;
-
-	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, DP_VDEV_ALL);
-
-	if (!peer)
-		return NULL;
-
-	if (peer->delete_in_progress) {
-		dp_err("Peer deletion in progress");
-		dp_peer_unref_delete(peer);
-		return NULL;
-	}
-
-	dp_info_rl("peer %pK mac: "QDF_MAC_ADDR_FMT, peer,
-		   QDF_MAC_ADDR_REF(peer->mac_addr.raw));
-
-	return peer;
-}
-#endif /* DP_PEER_EXTENDED_API */
-
 #ifdef WLAN_FEATURE_STATS_EXT
 /* rx hw stats event wait timeout in ms */
 #define DP_REO_STATUS_STATS_TIMEOUT 1500
