@@ -1798,7 +1798,7 @@ static int dcc_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct dcc_drvdata *drvdata;
 	struct resource *res;
-	struct md_region md_entry;
+	struct md_region;
 
 	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
 	if (!drvdata)
@@ -1894,7 +1894,7 @@ static int dcc_probe(struct platform_device *pdev)
 		goto err;
 
 	dcc_configure_list(drvdata, pdev->dev.of_node);
-
+#if 0
 	/* Add dcc info to minidump table */
 	strlcpy(md_entry.name, "KDCCDATA", sizeof(md_entry.name));
 	md_entry.virt_addr = (uintptr_t)drvdata->ram_base;
@@ -1902,6 +1902,7 @@ static int dcc_probe(struct platform_device *pdev)
 	md_entry.size = drvdata->ram_size;
 	if (msm_minidump_add_region(&md_entry))
 		dev_err(drvdata->dev, "Failed to add DCC data in Minidump\n");
+#endif
 
 	return 0;
 err:
