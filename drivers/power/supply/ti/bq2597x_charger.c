@@ -532,6 +532,7 @@ static int bq2597x_enable_wdt(struct bq2597x *bq, bool enable)
 }
 EXPORT_SYMBOL_GPL(bq2597x_enable_wdt);
 
+#ifdef CONFIG_CORESIGHT
 static __maybe_unused int bq2597x_set_wdt(struct bq2597x *bq, int ms)
 {
 	int ret;
@@ -555,6 +556,7 @@ static __maybe_unused int bq2597x_set_wdt(struct bq2597x *bq, int ms)
 	return ret;
 }
 EXPORT_SYMBOL_GPL(bq2597x_set_wdt);
+#endif
 
 static int bq2597x_enable_batovp(struct bq2597x *bq, bool enable)
 {
@@ -1191,6 +1193,7 @@ static int bq2597x_set_alarm_int_mask(struct bq2597x *bq, u8 mask)
 }
 EXPORT_SYMBOL_GPL(bq2597x_set_alarm_int_mask);
 
+#ifdef CONFIG_CORESIGHT
 static __maybe_unused int bq2597x_clear_alarm_int_mask(struct bq2597x *bq, u8 mask)
 {
 	int ret;
@@ -1207,6 +1210,7 @@ static __maybe_unused int bq2597x_clear_alarm_int_mask(struct bq2597x *bq, u8 ma
 	return ret;
 }
 EXPORT_SYMBOL_GPL(bq2597x_clear_alarm_int_mask);
+#endif
 
 static int bq2597x_set_fault_int_mask(struct bq2597x *bq, u8 mask)
 {
@@ -1225,6 +1229,7 @@ static int bq2597x_set_fault_int_mask(struct bq2597x *bq, u8 mask)
 }
 EXPORT_SYMBOL_GPL(bq2597x_set_fault_int_mask);
 
+#ifdef CONFIG_CORESIGHT
 static __maybe_unused int bq2597x_clear_fault_int_mask(struct bq2597x *bq, u8 mask)
 {
 	int ret;
@@ -1241,6 +1246,7 @@ static __maybe_unused int bq2597x_clear_fault_int_mask(struct bq2597x *bq, u8 ma
 	return ret;
 }
 EXPORT_SYMBOL_GPL(bq2597x_clear_fault_int_mask);
+#endif
 
 
 static int bq2597x_set_sense_resistor(struct bq2597x *bq, int r_mohm)
@@ -2239,6 +2245,7 @@ static int bq2597x_psy_register(struct bq2597x *bq)
 	return 0;
 }
 
+#ifdef CONFIG_CORESIGHT
 static __maybe_unused void bq2597x_dump_reg(struct bq2597x *bq)
 {
 
@@ -2254,6 +2261,7 @@ static __maybe_unused void bq2597x_dump_reg(struct bq2597x *bq)
 
 }
 EXPORT_SYMBOL_GPL(bq2597x_dump_reg);
+#endif
 
 static void bq2597x_dump_important_regs(struct bq2597x *bq)
 {
