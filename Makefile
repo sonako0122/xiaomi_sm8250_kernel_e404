@@ -943,6 +943,8 @@ CC_FLAGS_LTO	+= -flto
 endif
 CC_FLAGS_LTO	+= -fvisibility=hidden
 
+CC_FLAGS_LTO 	+= -fwhole-program-vtables
+
 # Limit inlining across translation units to reduce binary size
 KBUILD_LDFLAGS += -mllvm -import-instr-limit=5
 
