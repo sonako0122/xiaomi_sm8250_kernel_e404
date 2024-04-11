@@ -212,7 +212,7 @@ config ARM64
 config KSU
 	tristate "KernelSU function support"
 	select OVERLAY_FS
-	default y
+	default n
 	help
 	Enable kernel-level root privileges on Android System.
 
