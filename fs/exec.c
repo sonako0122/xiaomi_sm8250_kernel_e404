@@ -77,6 +77,8 @@ int suid_dumpable = 0;
 #define LIBPERFMGR "/vendor/bin/hw/android.hardware.power-service.xiaomi-libperfmgr"
 #define LIBPERFMGR_BIN "/vendor/bin/hw/android.hardware.power-service.xiaomi-sm8250-libperfmgr"
 #define PERF "/vendor/bin/hw/vendor.qti.hardware.perf-hal-service"
+#define PERF2 "/vendor/bin/hw/vendor.qti.hardware.perf@2.2-service"
+#define MIPERF "/vendor/bin/hw/vendor.xiaomi.hardware.miperf@1.0-service"
 #define PERFD "/vendor/bin/hw/vendor.qti.hardware.perf2-hal-service"
 #define SERVICEMANAGER_BIN "/system/bin/servicemanager"
 
@@ -1936,6 +1938,10 @@ static int __do_execve_file(int fd, struct filename *filename,
                 } else if (unlikely(!strcmp(filename->name, LIBPERFMGR_BIN))) {
                         WRITE_ONCE(powerhal_tsk, current);
                 } else if (unlikely(!strcmp(filename->name, PERF))) {
+                        WRITE_ONCE(powerhal_tsk, current);
+		} else if (unlikely(!strcmp(filename->name, PERF2))) {
+                        WRITE_ONCE(powerhal_tsk, current);
+		} else if (unlikely(!strcmp(filename->name, MIPERF))) {
                         WRITE_ONCE(powerhal_tsk, current);
                 } else if (unlikely(!strcmp(filename->name, PERFD))) {
                         WRITE_ONCE(powerhal_tsk, current);
