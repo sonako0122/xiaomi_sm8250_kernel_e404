@@ -339,6 +339,11 @@ CONFIG_BOARD_MUNCH=y
 # CONFIG_BOARD_MONET is not set
 
 #
+# Dummy MIGT Modules (enabled for MIUI compilation only)
+# CONFIG_MIGT is not set
+#
+
+#
 # Bus support
 #
 CONFIG_PCI=y
