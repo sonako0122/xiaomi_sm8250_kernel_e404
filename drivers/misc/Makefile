@@ -84,3 +84,5 @@ obj-$(CONFIG_GPIO_TESTING_MODE)	+= gpio-testing-mode.o
 obj-$(CONFIG_PERF_HELPER)	+= perf_helper.o
 obj-y				+= lyb_taskmmu.o
 obj-$(CONFIG_KINECTICS_XR_NORDIC) += kxrctrl/
+
+obj-$(CONFIG_KPROFILES) += Kprofiles/
