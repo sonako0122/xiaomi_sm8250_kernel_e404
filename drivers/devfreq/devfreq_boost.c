@@ -67,6 +67,9 @@ static void __devfreq_boost_kick(struct boost_dev *b)
 {
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
 		return;
+	
+	if (devfreq_input_boost_duration == 0)
+		return;
 
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
@@ -211,8 +214,8 @@ static int msm_drm_notifier_cb(struct notifier_block *nb,
 
 		if (*blank == MI_DRM_BLANK_UNBLANK) {
 			clear_bit(SCREEN_OFF, &b->state);
-			__devfreq_boost_kick_max(b,
-				devfreq_wake_boost_duration);
+			if (devfreq_wake_boost_duration != 0)
+				__devfreq_boost_kick_max(b, devfreq_wake_boost_duration);
 		} else {
 			set_bit(SCREEN_OFF, &b->state);
 			wake_up(&b->boost_waitq);
