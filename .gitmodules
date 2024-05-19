@@ -1,3 +1,6 @@
 [submodule "KernelSU"]
 	path = KernelSU
 	url = https://github.com/EmanuelCN/KernelSU
+[submodule "Kprofiles"]
+	path = Kprofiles
+	url = https://github.com/dakkshesh07/Kprofiles
