@@ -166,7 +166,7 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (!input_boost_duration)
+	if (input_boost_duration == 0)
 		return;
 
 	set_bit(INPUT_BOOST, &b->state);
@@ -313,7 +313,8 @@ static int msm_drm_notifier_cb(struct notifier_block *nb, unsigned long action,
 	/* Boost when the screen turns on and unboost when it turns off */
 	if (*blank == MI_DRM_BLANK_UNBLANK) {
 		clear_bit(SCREEN_OFF, &b->state);
-		__cpu_input_boost_kick_max(b, wake_boost_duration);
+		if (wake_boost_duration != 0)
+			__cpu_input_boost_kick_max(b, wake_boost_duration);
 	} else {
 		set_bit(SCREEN_OFF, &b->state);
 		wake_up(&b->boost_waitq);
