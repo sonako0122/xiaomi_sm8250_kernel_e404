@@ -12,6 +12,7 @@
 #include <linux/slab.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_panel.h>
+#include <linux/moduleparam.h>
 
 enum {
 	SCREEN_OFF,
@@ -29,6 +30,14 @@ struct boost_dev {
 	unsigned long state;
 };
 
+static unsigned short devfreq_input_boost_duration __read_mostly =
+	CONFIG_DEVFREQ_INPUT_BOOST_DURATION_MS;
+static unsigned short devfreq_wake_boost_duration __read_mostly =
+	CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS;
+
+module_param(devfreq_input_boost_duration, short, 0644);
+module_param(devfreq_wake_boost_duration, short, 0644);
+	
 struct df_boost_drv {
 	struct boost_dev devices[DEVFREQ_MAX];
 	struct notifier_block msm_drm_notif;
@@ -61,7 +70,7 @@ static void __devfreq_boost_kick(struct boost_dev *b)
 
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
-		msecs_to_jiffies(CONFIG_DEVFREQ_INPUT_BOOST_DURATION_MS))) {
+		msecs_to_jiffies(devfreq_input_boost_duration))) {
 		/* Set the bit again in case we raced with the unboost worker */
 		set_bit(INPUT_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
@@ -203,7 +212,7 @@ static int msm_drm_notifier_cb(struct notifier_block *nb,
 		if (*blank == MI_DRM_BLANK_UNBLANK) {
 			clear_bit(SCREEN_OFF, &b->state);
 			__devfreq_boost_kick_max(b,
-				CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS);
+				devfreq_wake_boost_duration);
 		} else {
 			set_bit(SCREEN_OFF, &b->state);
 			wake_up(&b->boost_waitq);
