@@ -2361,6 +2361,8 @@ struct task_struct *fork_idle(int cpu)
 	return task;
 }
 
+extern int kp_active_mode(void);
+
 /*
  *  Ok, this is the main fork-routine.
  *
@@ -2380,7 +2382,7 @@ long _do_fork(unsigned long clone_flags,
 	int trace = 0;
 	long nr;
 
-	if (task_is_zygote(current)) {
+	if (task_is_zygote(current) || kp_active_mode() != 1) {
                 cpu_input_boost_kick_max(50);
 		devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 50);
 	}
