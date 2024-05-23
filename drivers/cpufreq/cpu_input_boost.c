@@ -165,29 +165,26 @@ static void update_online_cpu_policy(void)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
-	unsigned int kpcpuboostduration;
-
-	if (test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1)
-		return;
-
-	if (input_boost_duration == 0)
-		return;
+	unsigned long kpcpuboost;
 
 	switch (kp_active_mode()) {
 	case 3:	
-		kpcpuboostduration = CONFIG_INPUT_BOOST_DURATION_MS * 2;
+		kpcpuboost = msecs_to_jiffies(CONFIG_INPUT_BOOST_DURATION_MS*2);
 		break;
 	case 2:
-		kpcpuboostduration = CONFIG_INPUT_BOOST_DURATION_MS;
+		kpcpuboost = msecs_to_jiffies(CONFIG_INPUT_BOOST_DURATION_MS);
 		break;
 	case 0:
-		kpcpuboostduration = input_boost_duration;
+		kpcpuboost = msecs_to_jiffies(input_boost_duration);
 		break;
 	}
 
+	if (test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1 || kpcpuboost == 0)
+		return;
+
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
-			      msecs_to_jiffies(kpcpuboostduration))) {
+			      kpcpuboost)) {
 		set_bit(INPUT_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
 	}
@@ -205,21 +202,11 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 {
 	unsigned long boost_jiffies, curr_expires, new_expires;
 
-	if (test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1)
+	boost_jiffies = msecs_to_jiffies(duration_ms);
+
+	if (test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1 || boost_jiffies == 0)
 		return;
 
-	switch (kp_active_mode()) {
-	case 3:	
-		boost_jiffies = msecs_to_jiffies(duration_ms * 2);
-		break;
-	case 2:
-		boost_jiffies = msecs_to_jiffies(duration_ms);
-		break;
-	case 0:
-		boost_jiffies = msecs_to_jiffies(duration_ms);
-		break;
-	}
-	
 	do {
 		curr_expires = atomic_long_read(&b->max_boost_expires);
 		new_expires = jiffies + boost_jiffies;
