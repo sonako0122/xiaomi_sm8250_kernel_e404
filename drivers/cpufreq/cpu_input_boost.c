@@ -245,7 +245,20 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 {
 	unsigned long input_boost;
 
-	input_boost = msecs_to_jiffies(input_boost_duration);
+	switch (kp_active_mode()) {
+	case 3:	
+		input_boost = msecs_to_jiffies(120);
+		break;
+	case 2:
+		input_boost = msecs_to_jiffies(58);
+		break;
+	case 1:
+		input_boost = msecs_to_jiffies(0);
+		break;	
+	case 0:
+		input_boost = msecs_to_jiffies(input_boost_duration);
+		break;
+	}
 
 	if (test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1 || input_boost == 0)
 		return;

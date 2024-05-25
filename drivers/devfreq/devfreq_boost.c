@@ -69,8 +69,21 @@ static void __devfreq_boost_kick(struct boost_dev *b)
 {
 	unsigned long input_boost;
 	
-	input_boost = msecs_to_jiffies(devfreq_input_boost_duration);
-
+	switch (kp_active_mode()) {
+	case 3:	
+		input_boost = msecs_to_jiffies(120);
+		break;
+	case 2:
+		input_boost = msecs_to_jiffies(58);
+		break;
+	case 1:
+		input_boost = msecs_to_jiffies(0);
+		break;	
+	case 0:
+		input_boost = msecs_to_jiffies(devfreq_input_boost_duration);
+		break;
+	}
+	
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1 || input_boost == 0)
 		return;
 
