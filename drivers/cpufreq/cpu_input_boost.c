@@ -126,11 +126,50 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = cpu_freq_min_little;
+		switch (kp_active_mode()) {
+			case 3:	
+				freq = 1171200;
+				break;
+			case 2:
+				freq = 883200;
+				break;
+			case 1:
+				freq = 518400;
+				break;
+			case 0:
+				freq = cpu_freq_min_little;
+				break;
+		}
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = cpu_freq_min_big;
-        else
-                freq = cpu_freq_min_prime;
+		switch (kp_active_mode()) {
+			case 3:	
+				freq = 1056000;
+				break;
+			case 2:
+				freq = 825600;
+				break;
+			case 1:
+				freq = 710400;
+				break;
+			case 0:
+				freq = cpu_freq_min_big;
+				break;
+		}
+    	else
+        	switch (kp_active_mode()) {
+			case 3:	
+				freq = 844800;
+				break;
+			case 2:
+				freq = 844800;
+				break;
+			case 1:
+				freq = 844800;
+				break;
+			case 0:
+				freq = cpu_freq_min_prime;
+				break;
+		}
 	return max(freq, policy->cpuinfo.min_freq);
 }
 
@@ -139,11 +178,50 @@ static unsigned int get_idle_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = cpu_freq_idle_little;
+		switch (kp_active_mode()) {
+			case 3:	
+				freq = 1708800;
+				break;
+			case 2:
+				freq = 1171200;
+				break;
+			case 1:
+				freq = 518400;
+				break;
+			case 0:
+				freq = cpu_freq_idle_little;
+				break;
+		}
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = cpu_freq_idle_big;
-        else
-                freq = cpu_freq_idle_prime;
+		switch (kp_active_mode()) {
+			case 3:	
+				freq = 1056000;
+				break;
+			case 2:
+				freq = 825600;
+				break;
+			case 1:
+				freq = 710400;
+				break;
+			case 0:
+				freq = cpu_freq_idle_big;
+				break;
+		}
+    	else
+	        switch (kp_active_mode()) {
+			case 3:	
+				freq = 844800;
+				break;
+			case 2:
+				freq = 844800;
+				break;
+			case 1:
+				freq = 844800;
+				break;
+			case 0:
+				freq = cpu_freq_idle_prime;
+				break;
+		}
 	return max(freq, policy->cpuinfo.min_freq);
 }
 
