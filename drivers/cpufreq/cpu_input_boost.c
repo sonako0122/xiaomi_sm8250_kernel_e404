@@ -37,12 +37,6 @@ static unsigned int cpu_freq_min_big __read_mostly =
 	CONFIG_CPU_FREQ_MIN_PERF;
 static unsigned int cpu_freq_min_prime __read_mostly =
 	CONFIG_CPU_FREQ_MIN_PRIME;
-static unsigned int cpu_freq_idle_little __read_mostly =
-	CONFIG_CPU_FREQ_IDLE_LP;
-static unsigned int cpu_freq_idle_big __read_mostly =
-	CONFIG_CPU_FREQ_IDLE_PERF;
-static unsigned int cpu_freq_idle_prime __read_mostly =
-	CONFIG_CPU_FREQ_IDLE_PRIME;
 
 static unsigned short input_boost_duration __read_mostly =
 	CONFIG_INPUT_BOOST_DURATION_MS;
@@ -58,9 +52,6 @@ module_param(max_boost_freq_prime, uint, 0644);
 module_param(cpu_freq_min_little, uint, 0644);
 module_param(cpu_freq_min_big, uint, 0644);
 module_param(cpu_freq_min_prime, uint, 0644);
-module_param(cpu_freq_idle_little, uint, 0644);
-module_param(cpu_freq_idle_big, uint, 0644);
-module_param(cpu_freq_idle_prime, uint, 0644);
 
 module_param(input_boost_duration, short, 0644);
 module_param(wake_boost_duration, short, 0644);
@@ -171,59 +162,6 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 		}
 	return max(freq, policy->cpuinfo.min_freq);
 }
-
-static unsigned int get_idle_freq(struct cpufreq_policy *policy)
-{
-	unsigned int freq;
-
-	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		switch (kp_active_mode()) {
-			case 3:	
-				freq = 1708800;
-				break;
-			case 2:
-				freq = 1171200;
-				break;
-			case 1:
-				freq = 518400;
-				break;
-			case 0:
-				freq = cpu_freq_idle_little;
-				break;
-		}
-	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		switch (kp_active_mode()) {
-			case 3:	
-				freq = 1056000;
-				break;
-			case 2:
-				freq = 825600;
-				break;
-			case 1:
-				freq = 710400;
-				break;
-			case 0:
-				freq = cpu_freq_idle_big;
-				break;
-		}
-    	else
-	        switch (kp_active_mode()) {
-			case 3:	
-				freq = 844800;
-				break;
-			case 2:
-				freq = 844800;
-				break;
-			case 1:
-				freq = 844800;
-				break;
-			case 0:
-				freq = cpu_freq_idle_prime;
-				break;
-		}
-	return max(freq, policy->cpuinfo.min_freq);
-}
-
 
 static void update_online_cpu_policy(void)
 {
@@ -366,7 +304,7 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
-		policy->min = get_idle_freq(policy);
+		policy->min = get_min_freq(policy);
 		return NOTIFY_OK;
 	}
 
