@@ -99,13 +99,12 @@ static unsigned int get_input_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = max(input_boost_freq_little, cpu_freq_min_little);
+		freq = input_boost_freq_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = max(input_boost_freq_big, cpu_freq_min_big);
+		freq = input_boost_freq_big;
 	else
-                freq = max(input_boost_freq_prime, cpu_freq_min_prime);
-                return min(freq, policy->max);
-
+		freq = input_boost_freq_prime;
+	return min(freq, policy->max);
 }
 
 static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
@@ -113,12 +112,12 @@ static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = max(max_boost_freq_little, cpu_freq_min_little);
+		freq = max_boost_freq_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = max(max_boost_freq_big, cpu_freq_min_big);
-        else
-                freq = max(max_boost_freq_prime, cpu_freq_min_prime);
-		return min(freq, policy->max);
+		freq = max_boost_freq_big;
+	else
+		freq = max_boost_freq_prime;
+	return min(freq, policy->max);
 }
 
 static unsigned int get_min_freq(struct cpufreq_policy *policy)
@@ -265,10 +264,8 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
-			      input_boost)) {
-		set_bit(INPUT_BOOST, &b->state);
+			      input_boost))
 		wake_up(&b->boost_waitq);
-	}
 }
 
 void cpu_input_boost_kick(void)
@@ -281,7 +278,8 @@ void cpu_input_boost_kick(void)
 static void __cpu_input_boost_kick_max(struct boost_drv *b,
 				       unsigned int duration_ms)
 {
-	unsigned long boost_jiffies, curr_expires, new_expires;
+	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
+	unsigned long curr_expires, new_expires;
 
 	boost_jiffies = msecs_to_jiffies(duration_ms);
 
@@ -300,11 +298,8 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 
 	set_bit(MAX_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
-			      boost_jiffies)) {
-		/* Set the bit again in case we raced with the unboost worker */
-		set_bit(MAX_BOOST, &b->state);
+			      boost_jiffies))
 		wake_up(&b->boost_waitq);
-	}
 }
 
 void cpu_input_boost_kick_max(unsigned int duration_ms)
@@ -346,17 +341,15 @@ static int cpu_boost_thread(void *data)
 		bool should_stop = false;
 		unsigned long curr_state;
 
-		wait_event_interruptible(b->boost_waitq,
+		wait_event(b->boost_waitq,
 			(curr_state = READ_ONCE(b->state)) != old_state ||
 			(should_stop = kthread_should_stop()));
 
 		if (should_stop)
 			break;
 
-		if (old_state != curr_state) {
-		        update_online_cpu_policy();
-			old_state = curr_state;
-		}
+		old_state = curr_state;
+		update_online_cpu_policy();
 	}
 
 	return 0;
