@@ -506,8 +506,6 @@ static int cgroup_pidlist_show(struct seq_file *s, void *v)
 	return 0;
 }
 
-extern int kp_active_mode(void);
-
 static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 				     char *buf, size_t nbytes, loff_t off,
 				     bool threadgroup)
@@ -545,14 +543,12 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 	ret = cgroup_attach_task(cgrp, task, threadgroup);
 
 	/* This covers boosting for app launches and app transitions */
-	if (kp_active_mode() != 1) {
-        	if (!ret && !threadgroup &&
-               		!memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
-               		task_is_zygote(task->parent)) {
-                		cpu_input_boost_kick_max(1000);
-                		devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 1000);
-        	}
-	}
+        if (!ret && !threadgroup &&
+               	!memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
+               	task_is_zygote(task->parent)) {
+                	cpu_input_boost_kick_max(1000);
+                	devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 1000);
+        }
 
 out_finish:
 	cgroup_procs_write_finish(task);
