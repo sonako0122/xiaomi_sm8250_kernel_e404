@@ -117,48 +117,30 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
 		switch (kp_active_mode()) {
-			case 3:	
-				freq = 1171200;
-				break;
-			case 2:
-				freq = 883200;
-				break;
-			case 1:
-				freq = 518400;
-				break;
-			case 0:
-				freq = cpu_freq_min_little;
-				break;
+			case 3: freq = 1171200; break;
+			case 2: freq = 883200; break;
+			case 1: freq = 518400; break;
+			case 0: freq = cpu_freq_min_little; break;
+			// Handle unexpected cases
+			default: freq = cpu_freq_min_little; break;
 		}
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
 		switch (kp_active_mode()) {
-			case 3:	
-				freq = 1056000;
-				break;
-			case 2:
-				freq = 825600;
-				break;
-			case 1:
-				freq = 710400;
-				break;
-			case 0:
-				freq = cpu_freq_min_big;
-				break;
+			case 3: freq = 1056000; break;
+			case 2: freq = 825600; break;
+			case 1: freq = 710400; break;
+			case 0: freq = cpu_freq_min_big; break;
+			// Handle unexpected cases
+			default: freq = cpu_freq_min_big; break;
 		}
     	else
         	switch (kp_active_mode()) {
-			case 3:	
-				freq = 844800;
-				break;
-			case 2:
-				freq = 844800;
-				break;
-			case 1:
-				freq = 844800;
-				break;
-			case 0:
-				freq = cpu_freq_min_prime;
-				break;
+			case 3: freq = 844800; break;
+			case 2: freq = 844800; break;
+			case 1: freq = 844800; break;
+			case 0: freq = cpu_freq_min_prime; break;
+			// Handle unexpected cases
+			default: freq = cpu_freq_min_prime; break;
 		}
 	return max(freq, policy->cpuinfo.min_freq);
 }
@@ -183,18 +165,12 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	unsigned long input_boost;
 
 	switch (kp_active_mode()) {
-	case 3:	
-		input_boost = msecs_to_jiffies(120);
-		break;
-	case 2:
-		input_boost = msecs_to_jiffies(58);
-		break;
-	case 1:
-		input_boost = msecs_to_jiffies(0);
-		break;	
-	case 0:
-		input_boost = msecs_to_jiffies(input_boost_duration);
-		break;
+		case 3: input_boost = msecs_to_jiffies(120); break;
+		case 2: input_boost = msecs_to_jiffies(58); break;
+		case 1: input_boost = msecs_to_jiffies(0); break;	
+		case 0: input_boost = msecs_to_jiffies(input_boost_duration); break;
+		// Handle unexpected cases
+		default: input_boost = msecs_to_jiffies(input_boost_duration); break;
 	}
 
 	if (test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1 || input_boost == 0)
