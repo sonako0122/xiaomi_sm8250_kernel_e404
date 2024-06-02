@@ -698,6 +698,9 @@ KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
 #Enable optimization for cortex a55
 KBUILD_CFLAGS	+= -mcpu=cortex-a55 -mtune=cortex-a55
 KBUILD_AFLAGS   += -mcpu=cortex-a55 -mtune=cortex-a55
+#Enable MLGO
+KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
+KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
 #Math related flags
 KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
 #Other flags
