@@ -67,23 +67,16 @@ static struct df_boost_drv df_boost_drv_g __read_mostly = {
 
 static void __devfreq_boost_kick(struct boost_dev *b)
 {
-	unsigned long input_boost;
+	unsigned long input_boost = msecs_to_jiffies(devfreq_input_boost_duration);
 	
-	switch (kp_active_mode()) {
-		case 3: input_boost = msecs_to_jiffies(120); break;
-		case 2: input_boost = msecs_to_jiffies(58); break;
-		case 1: input_boost = msecs_to_jiffies(0); break;	
-		case 0: input_boost = msecs_to_jiffies(devfreq_input_boost_duration); break;
-		// Handle unexpected cases
-		default: input_boost = msecs_to_jiffies(devfreq_input_boost_duration); break;
-	}
-	
-	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1 || input_boost == 0)
+	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
+		return;
+
+	if (kp_active_mode() == 1 || input_boost == 0)
 		return;
 
 	set_bit(INPUT_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
-		input_boost)) {
+	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, input_boost)) {
 		/* Set the bit again in case we raced with the unboost worker */
 		set_bit(INPUT_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
@@ -100,11 +93,13 @@ void devfreq_boost_kick(enum df_device device)
 static void __devfreq_boost_kick_max(struct boost_dev *b,
 				     unsigned int duration_ms)
 {
-	unsigned long boost_jiffies, curr_expires, new_expires;
+	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
+	unsigned long curr_expires, new_expires;
 
-	boost_jiffies = msecs_to_jiffies(duration_ms);
+	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
+		return;
 
-	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state) || kp_active_mode() == 1 || boost_jiffies == 0)
+	if (kp_active_mode() == 1 || boost_jiffies == 0)
 		return;
 
 	do {
@@ -118,8 +113,7 @@ static void __devfreq_boost_kick_max(struct boost_dev *b,
 				     new_expires) != curr_expires);
 
 	set_bit(MAX_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
-			      boost_jiffies)) {
+	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost, boost_jiffies)) {
 		/* Set the bit again in case we raced with the unboost worker */
 		set_bit(MAX_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
