@@ -116,11 +116,28 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = cpu_freq_min_little;
+		if (kp_active_mode() == 1)
+			freq = 518400;
+		else if (kp_active_mode() == 2)
+			freq = 883200;
+		else if (kp_active_mode() == 3)
+			freq = 1171200;
+		else
+			freq = cpu_freq_min_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = cpu_freq_min_big;
+		if (kp_active_mode() == 1)
+			freq = 710400;
+		else if (kp_active_mode() == 2)
+			freq = 825600;
+		else if (kp_active_mode() == 3)
+			freq = 1056000;
+		else
+			freq = cpu_freq_min_big;
 	else
-        	freq = cpu_freq_min_prime;
+		if (kp_active_mode() == 1 || kp_active_mode() == 2 || kp_active_mode() == 3)
+			freq = 844800;
+		else
+			freq = cpu_freq_min_prime;
 
 	return max(freq, policy->cpuinfo.min_freq);
 }
@@ -142,17 +159,22 @@ static void update_online_cpu_policy(void)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
-	unsigned long input_boost = msecs_to_jiffies(input_boost_duration);
+	unsigned short boost_duration = msecs_to_jiffies(input_boost_duration);
 
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (kp_active_mode() == 1 || input_boost == 0)
+	if (kp_active_mode() == 1 || boost_duration == 0)
 		return;
 	
+	if (kp_active_mode() == 2)
+		boost_duration = msecs_to_jiffies(60);
+	else if (kp_active_mode() == 3)
+		boost_duration = msecs_to_jiffies(120);
+
 	set_bit(INPUT_BOOST, &b->state);
 
-	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, input_boost))
+	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, boost_duration))
 		wake_up(&b->boost_waitq);
 }
 
@@ -166,7 +188,7 @@ void cpu_input_boost_kick(void)
 static void __cpu_input_boost_kick_max(struct boost_drv *b,
 				       unsigned int duration_ms)
 {
-	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
+	unsigned short boost_jiffies = msecs_to_jiffies(duration_ms);
 	unsigned long curr_expires, new_expires;
 
 	if (test_bit(SCREEN_OFF, &b->state))

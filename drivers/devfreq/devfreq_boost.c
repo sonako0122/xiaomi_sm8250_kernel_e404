@@ -67,16 +67,21 @@ static struct df_boost_drv df_boost_drv_g __read_mostly = {
 
 static void __devfreq_boost_kick(struct boost_dev *b)
 {
-	unsigned long input_boost = msecs_to_jiffies(devfreq_input_boost_duration);
+	unsigned short boost_duration = msecs_to_jiffies(devfreq_input_boost_duration);
 	
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (kp_active_mode() == 1 || input_boost == 0)
+	if (kp_active_mode() == 1 || boost_duration == 0)
 		return;
 
+	if (kp_active_mode() == 2)
+		boost_duration = msecs_to_jiffies(60);
+	else if (kp_active_mode() == 3)
+		boost_duration = msecs_to_jiffies(120);
+
 	set_bit(INPUT_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, input_boost)) {
+	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, boost_duration)) {
 		/* Set the bit again in case we raced with the unboost worker */
 		set_bit(INPUT_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
@@ -93,7 +98,7 @@ void devfreq_boost_kick(enum df_device device)
 static void __devfreq_boost_kick_max(struct boost_dev *b,
 				     unsigned int duration_ms)
 {
-	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
+	unsigned short boost_jiffies = msecs_to_jiffies(duration_ms);
 	unsigned long curr_expires, new_expires;
 
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
