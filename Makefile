@@ -695,7 +695,15 @@ else ifeq ($(cc-name),clang)
 KBUILD_CFLAGS   += -ffp-contract=fast
 #Enable hot cold split optimization
 KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
-KBUILD_CFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod -fno-trapping-math -fno-math-errno -fcf-protection=none -ffast-math --cuda-path=/dev/null
+#Enable optimization for cortex a55
+KBUILD_CFLAGS	+= -mcpu=cortex-a55 -mtune=cortex-a55
+KBUILD_AFLAGS   += -mcpu=cortex-a55 -mtune=cortex-a55
+#Math related flags
+KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
+#Other flags
+KBUILD_CFLAGS   += -fcf-protection=none -funroll-loops --cuda-path=/dev/null
+#-O3 optimization
+KBUILD_CFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod
 KBUILD_AFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod
 KBUILD_LDFLAGS  += -O3 --plugin-opt=O3
 else
@@ -721,9 +729,6 @@ endif
 endif
 
 endif
-
-KBUILD_CFLAGS	+= -mcpu=cortex-a55 -mtune=cortex-a55
-KBUILD_AFLAGS   += -mcpu=cortex-a55 -mtune=cortex-a55
 
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)
