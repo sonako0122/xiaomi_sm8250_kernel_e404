@@ -30,7 +30,9 @@ struct boost_dev {
 	unsigned long state;
 };
 
+#ifdef CONFIG_KPROFILES
 extern int kp_active_mode(void);
+#endif
 
 static unsigned short devfreq_input_boost_duration __read_mostly =
 	CONFIG_DEVFREQ_INPUT_BOOST_DURATION_MS;
@@ -72,13 +74,17 @@ static void __devfreq_boost_kick(struct boost_dev *b)
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (kp_active_mode() == 1 || boost_duration == 0)
+	if (boost_duration == 0)
 		return;
 
-	if (kp_active_mode() == 2)
+	#ifdef CONFIG_KPROFILES
+	if (kp_active_mode() == 1)
+		return;
+	else if (kp_active_mode() == 2)
 		boost_duration = msecs_to_jiffies(60);
 	else if (kp_active_mode() == 3)
 		boost_duration = msecs_to_jiffies(120);
+	#endif
 
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, boost_duration)) {
@@ -104,8 +110,13 @@ static void __devfreq_boost_kick_max(struct boost_dev *b,
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (kp_active_mode() == 1 || boost_jiffies == 0)
+	if (boost_jiffies == 0)
 		return;
+
+	#ifdef CONFIG_KPROFILES
+	if (kp_active_mode() == 1)
+		return;
+	#endif
 
 	do {
 		curr_expires = atomic_long_read(&b->max_boost_expires);

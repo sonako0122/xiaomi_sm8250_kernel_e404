@@ -43,7 +43,9 @@ struct boost_drv {
 	unsigned long state;
 };
 
+#ifdef CONFIG_KPROFILES
 extern int kp_active_mode(void);
+#endif
 
 static void input_unboost_worker(struct work_struct *work);
 static void max_unboost_worker(struct work_struct *work);
@@ -87,6 +89,7 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
+		#ifdef CONFIG_KPROFILES
 		if (kp_active_mode() == 1)
 			freq = 518400;
 		else if (kp_active_mode() == 2)
@@ -94,8 +97,10 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 		else if (kp_active_mode() == 3)
 			freq = 1171200;
 		else
+		#endif
 			freq = CONFIG_CPU_FREQ_MIN_LP;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
+		#ifdef CONFIG_KPROFILES
 		if (kp_active_mode() == 1)
 			freq = 710400;
 		else if (kp_active_mode() == 2)
@@ -103,11 +108,14 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 		else if (kp_active_mode() == 3)
 			freq = 1056000;
 		else
+		#endif
 			freq = CONFIG_CPU_FREQ_MIN_PERF;
 	else
+		#ifdef CONFIG_KPROFILES
 		if (kp_active_mode() == 1 || kp_active_mode() == 2 || kp_active_mode() == 3)
 			freq = 844800;
 		else
+		#endif 
 			freq = CONFIG_CPU_FREQ_MIN_PRIME;
 
 	return max(freq, policy->cpuinfo.min_freq);
@@ -135,13 +143,17 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (kp_active_mode() == 1 || boost_duration == 0)
+	if (boost_duration == 0)
 		return;
 	
-	if (kp_active_mode() == 2)
+	#ifdef CONFIG_KPROFILES
+	if (kp_active_mode() == 1)
+		return;
+	else if (kp_active_mode() == 2)
 		boost_duration = msecs_to_jiffies(60);
 	else if (kp_active_mode() == 3)
 		boost_duration = msecs_to_jiffies(120);
+	#endif
 
 	set_bit(INPUT_BOOST, &b->state);
 
@@ -165,8 +177,13 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 	
-	if (kp_active_mode() == 1 || boost_jiffies == 0)
+	if (boost_jiffies == 0)
 		return;
+
+	#ifdef CONFIG_KPROFILES
+	if (kp_active_mode() == 1)
+		return;
+	#endif
 
 	do {
 		curr_expires = atomic_long_read(&b->max_boost_expires);
