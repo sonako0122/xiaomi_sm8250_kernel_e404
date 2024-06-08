@@ -19,10 +19,39 @@
 #include <uapi/linux/sched/types.h>
 #endif
 
+static unsigned int input_boost_freq_little __read_mostly =
+	CONFIG_INPUT_BOOST_FREQ_LP;
+static unsigned int input_boost_freq_big __read_mostly =
+	CONFIG_INPUT_BOOST_FREQ_PERF;
+static unsigned int input_boost_freq_prime __read_mostly =
+	CONFIG_INPUT_BOOST_FREQ_PRIME;
+static unsigned int max_boost_freq_little __read_mostly =
+	CONFIG_MAX_BOOST_FREQ_LP;
+static unsigned int max_boost_freq_big __read_mostly =
+	CONFIG_MAX_BOOST_FREQ_PERF;
+static unsigned int max_boost_freq_prime __read_mostly =
+	CONFIG_MAX_BOOST_FREQ_PRIME;
+static unsigned int cpu_freq_min_little __read_mostly =
+	CONFIG_CPU_FREQ_MIN_LP;
+static unsigned int cpu_freq_min_big __read_mostly =
+	CONFIG_CPU_FREQ_MIN_PERF;
+static unsigned int cpu_freq_min_prime __read_mostly =
+	CONFIG_CPU_FREQ_MIN_PRIME;
+
 static unsigned short input_boost_duration __read_mostly =
 	CONFIG_INPUT_BOOST_DURATION_MS;
 static unsigned short wake_boost_duration __read_mostly =
 	CONFIG_WAKE_BOOST_DURATION_MS;
+
+module_param(input_boost_freq_little, uint, 0644);
+module_param(input_boost_freq_big, uint, 0644);
+module_param(input_boost_freq_prime, uint, 0644);
+module_param(max_boost_freq_little, uint, 0644);
+module_param(max_boost_freq_big, uint, 0644);
+module_param(max_boost_freq_prime, uint, 0644);
+module_param(cpu_freq_min_little, uint, 0644);
+module_param(cpu_freq_min_big, uint, 0644);
+module_param(cpu_freq_min_prime, uint, 0644);
 
 module_param(input_boost_duration, short, 0644);
 module_param(wake_boost_duration, short, 0644);
@@ -43,10 +72,6 @@ struct boost_drv {
 	unsigned long state;
 };
 
-#ifdef CONFIG_KPROFILES
-extern int kp_active_mode(void);
-#endif
-
 static void input_unboost_worker(struct work_struct *work);
 static void max_unboost_worker(struct work_struct *work);
 
@@ -63,11 +88,11 @@ static unsigned int get_input_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = CONFIG_INPUT_BOOST_FREQ_LP;
+		freq = input_boost_freq_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = CONFIG_INPUT_BOOST_FREQ_PERF;
+		freq = input_boost_freq_big;
 	else
-		freq = CONFIG_INPUT_BOOST_FREQ_PRIME;
+		freq = input_boost_freq_prime;
 	return min(freq, policy->max);
 }
 
@@ -76,11 +101,11 @@ static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = CONFIG_MAX_BOOST_FREQ_LP;
+		freq = max_boost_freq_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = CONFIG_MAX_BOOST_FREQ_PERF;
+		freq = max_boost_freq_big;
 	else
-		freq = CONFIG_MAX_BOOST_FREQ_PRIME;
+		freq = max_boost_freq_prime;
 	return min(freq, policy->max);
 }
 
@@ -89,37 +114,15 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		#ifdef CONFIG_KPROFILES
-		if (kp_active_mode() == 1)
-			freq = 518400;
-		else if (kp_active_mode() == 2)
-			freq = 883200;
-		else if (kp_active_mode() == 3)
-			freq = 1171200;
-		else
-		#endif
-			freq = CONFIG_CPU_FREQ_MIN_LP;
+		freq = cpu_freq_min_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		#ifdef CONFIG_KPROFILES
-		if (kp_active_mode() == 1)
-			freq = 710400;
-		else if (kp_active_mode() == 2)
-			freq = 825600;
-		else if (kp_active_mode() == 3)
-			freq = 1056000;
-		else
-		#endif
-			freq = CONFIG_CPU_FREQ_MIN_PERF;
+		freq = cpu_freq_min_big;
 	else
-		#ifdef CONFIG_KPROFILES
-		if (kp_active_mode() == 1 || kp_active_mode() == 2 || kp_active_mode() == 3)
-			freq = 844800;
-		else
-		#endif 
-			freq = CONFIG_CPU_FREQ_MIN_PRIME;
+		freq = cpu_freq_min_prime;
 
 	return max(freq, policy->cpuinfo.min_freq);
 }
+
 
 static void update_online_cpu_policy(void)
 {
@@ -138,26 +141,15 @@ static void update_online_cpu_policy(void)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
-	unsigned short boost_duration = msecs_to_jiffies(input_boost_duration);
-
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (boost_duration == 0)
+	if (!input_boost_duration)
 		return;
-	
-	#ifdef CONFIG_KPROFILES
-	if (kp_active_mode() == 1)
-		return;
-	else if (kp_active_mode() == 2)
-		boost_duration = msecs_to_jiffies(60);
-	else if (kp_active_mode() == 3)
-		boost_duration = msecs_to_jiffies(120);
-	#endif
 
 	set_bit(INPUT_BOOST, &b->state);
-
-	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, boost_duration))
+	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
+			      msecs_to_jiffies(input_boost_duration)))
 		wake_up(&b->boost_waitq);
 }
 
@@ -171,19 +163,11 @@ void cpu_input_boost_kick(void)
 static void __cpu_input_boost_kick_max(struct boost_drv *b,
 				       unsigned int duration_ms)
 {
-	unsigned short boost_jiffies = msecs_to_jiffies(duration_ms);
+	unsigned long boost_jiffies = msecs_to_jiffies(duration_ms);
 	unsigned long curr_expires, new_expires;
 
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
-	
-	if (boost_jiffies == 0)
-		return;
-
-	#ifdef CONFIG_KPROFILES
-	if (kp_active_mode() == 1)
-		return;
-	#endif
 
 	do {
 		curr_expires = atomic_long_read(&b->max_boost_expires);
@@ -196,8 +180,8 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 				     new_expires) != curr_expires);
 
 	set_bit(MAX_BOOST, &b->state);
-
-	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost, boost_jiffies))
+	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
+			      boost_jiffies))
 		wake_up(&b->boost_waitq);
 }
 

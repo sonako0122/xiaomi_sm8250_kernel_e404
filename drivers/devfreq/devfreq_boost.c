@@ -12,7 +12,6 @@
 #include <linux/slab.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_panel.h>
-#include <linux/moduleparam.h>
 
 enum {
 	SCREEN_OFF,
@@ -30,18 +29,6 @@ struct boost_dev {
 	unsigned long state;
 };
 
-#ifdef CONFIG_KPROFILES
-extern int kp_active_mode(void);
-#endif
-
-static unsigned short devfreq_input_boost_duration __read_mostly =
-	CONFIG_DEVFREQ_INPUT_BOOST_DURATION_MS;
-static unsigned short devfreq_wake_boost_duration __read_mostly =
-	CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS;
-
-module_param(devfreq_input_boost_duration, short, 0644);
-module_param(devfreq_wake_boost_duration, short, 0644);
-	
 struct df_boost_drv {
 	struct boost_dev devices[DEVFREQ_MAX];
 	struct notifier_block msm_drm_notif;
@@ -69,25 +56,12 @@ static struct df_boost_drv df_boost_drv_g __read_mostly = {
 
 static void __devfreq_boost_kick(struct boost_dev *b)
 {
-	unsigned short boost_duration = msecs_to_jiffies(devfreq_input_boost_duration);
-	
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (boost_duration == 0)
-		return;
-
-	#ifdef CONFIG_KPROFILES
-	if (kp_active_mode() == 1)
-		return;
-	else if (kp_active_mode() == 2)
-		boost_duration = msecs_to_jiffies(60);
-	else if (kp_active_mode() == 3)
-		boost_duration = msecs_to_jiffies(120);
-	#endif
-
 	set_bit(INPUT_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost, boost_duration)) {
+	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
+		msecs_to_jiffies(CONFIG_DEVFREQ_INPUT_BOOST_DURATION_MS))) {
 		/* Set the bit again in case we raced with the unboost worker */
 		set_bit(INPUT_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
@@ -104,20 +78,12 @@ void devfreq_boost_kick(enum df_device device)
 static void __devfreq_boost_kick_max(struct boost_dev *b,
 				     unsigned int duration_ms)
 {
-	unsigned short boost_jiffies = msecs_to_jiffies(duration_ms);
-	unsigned long curr_expires, new_expires;
+	unsigned long boost_jiffies, curr_expires, new_expires;
 
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (boost_jiffies == 0)
-		return;
-
-	#ifdef CONFIG_KPROFILES
-	if (kp_active_mode() == 1)
-		return;
-	#endif
-
+	boost_jiffies = msecs_to_jiffies(duration_ms);
 	do {
 		curr_expires = atomic_long_read(&b->max_boost_expires);
 		new_expires = jiffies + boost_jiffies;
@@ -129,7 +95,8 @@ static void __devfreq_boost_kick_max(struct boost_dev *b,
 				     new_expires) != curr_expires);
 
 	set_bit(MAX_BOOST, &b->state);
-	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost, boost_jiffies)) {
+	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
+			      boost_jiffies)) {
 		/* Set the bit again in case we raced with the unboost worker */
 		set_bit(MAX_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
@@ -235,7 +202,8 @@ static int msm_drm_notifier_cb(struct notifier_block *nb,
 
 		if (*blank == MI_DRM_BLANK_UNBLANK) {
 			clear_bit(SCREEN_OFF, &b->state);
-			__devfreq_boost_kick_max(b, devfreq_wake_boost_duration);
+			__devfreq_boost_kick_max(b,
+				CONFIG_DEVFREQ_WAKE_BOOST_DURATION_MS);
 		} else {
 			set_bit(SCREEN_OFF, &b->state);
 			wake_up(&b->boost_waitq);
