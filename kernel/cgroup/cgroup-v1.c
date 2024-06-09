@@ -44,6 +44,11 @@ static struct workqueue_struct *cgroup_pidlist_destroy_wq;
  */
 static DEFINE_SPINLOCK(release_agent_path_lock);
 
+
+#ifdef CONFIG_KPROFILES
+extern int kp_active_mode(void);
+#endif
+
 bool cgroup1_ssid_disabled(int ssid)
 {
 	return cgroup_no_v1_mask & (1 << ssid);
@@ -543,12 +548,19 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 	ret = cgroup_attach_task(cgrp, task, threadgroup);
 
 	/* This covers boosting for app launches and app transitions */
-        if (!ret && !threadgroup &&
-               	!memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
-               	task_is_zygote(task->parent)) {
-                	cpu_input_boost_kick_max(300);
-                	devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 500);
-        }
+	if (!ret && !threadgroup &&
+		memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
+		task_is_zygote(task->parent)) {
+		#ifdef CONFIG_KPROFILES
+		if (kp_active_mode() == 2) {
+               		cpu_input_boost_kick_max(300);
+               		devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 500);
+		} else if (kp_active_mode() == 3) {
+			cpu_input_boost_kick_max(500);
+			devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 700);
+		}
+		#endif
+	}
 
 out_finish:
 	cgroup_procs_write_finish(task);

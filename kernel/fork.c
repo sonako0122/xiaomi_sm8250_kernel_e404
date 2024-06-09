@@ -121,6 +121,10 @@
  */
 #define MAX_THREADS FUTEX_TID_MASK
 
+#ifdef CONFIG_KPROFILES
+extern int kp_active_mode(void);
+#endif
+
 /*
  * Protected counters by write_lock_irq(&tasklist_lock)
  */
@@ -2381,8 +2385,12 @@ long _do_fork(unsigned long clone_flags,
 	long nr;
 
 	if (task_is_zygote(current)) {
-                cpu_input_boost_kick_max(50);
-		devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 50);
+		#ifdef CONFIG_KPROFILES
+		if (kp_active_mode() == 2 || kp_active_mode() == 3) {
+			cpu_input_boost_kick_max(50);
+			devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 50);
+		}
+		#endif
 	}
 
 	/*
