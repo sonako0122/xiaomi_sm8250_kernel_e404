@@ -15,7 +15,6 @@
 #include <linux/cgroupstats.h>
 #include <linux/binfmts.h>
 #include <linux/devfreq_boost.h>
-#include <linux/cpu_input_boost.h>
 #include <trace/events/cgroup.h>
 
 /*
@@ -553,10 +552,8 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 		task_is_zygote(task->parent)) {
 		#ifdef CONFIG_KPROFILES
 		if (kp_active_mode() == 2) {
-               		cpu_input_boost_kick_max(300);
                		devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 500);
 		} else if (kp_active_mode() == 3) {
-			cpu_input_boost_kick_max(500);
 			devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 700);
 		}
 		#endif
