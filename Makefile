@@ -691,8 +691,6 @@ KBUILD_CFLAGS   += -Os
 KBUILD_AFLAGS   += -Os
 KBUILD_LDFLAGS  += -Os
 else ifeq ($(cc-name),clang)
-#Enable fast FMA optimizations
-KBUILD_CFLAGS   += -ffp-contract=fast
 #Enable hot cold split optimization
 KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
 #Enable optimization for cortex a55
