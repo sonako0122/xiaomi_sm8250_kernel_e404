@@ -700,7 +700,7 @@ KBUILD_AFLAGS   += -mcpu=cortex-a55 -mtune=cortex-a55
 KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
 KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
 #Math related flags
-KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
+#KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
 #Other flags
 KBUILD_CFLAGS   += -fcf-protection=none -funroll-loops --cuda-path=/dev/null
 #-O3 optimization
