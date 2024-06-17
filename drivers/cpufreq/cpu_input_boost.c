@@ -28,8 +28,10 @@ static unsigned int cpu_freq_min_little __read_mostly = 691200;
 static unsigned int cpu_freq_min_big __read_mostly = 710400;
 static unsigned int cpu_freq_min_prime __read_mostly = 844800;
 
-static unsigned short input_boost_duration __read_mostly = 50;
+static unsigned short input_boost_duration __read_mostly = 40;
 static unsigned short wake_boost_duration __read_mostly = 0;
+
+extern int kp_active_mode(void);
 
 enum {
 	SCREEN_OFF,
@@ -63,11 +65,20 @@ static unsigned int get_input_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = input_boost_freq_little;
+		switch (kp_active_mode()) {
+			case 3: freq = 1708800; break;
+			default: freq = input_boost_freq_little; break;
+		}
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = input_boost_freq_big;
+		switch (kp_active_mode()) {
+			case 3: freq = 1478400; break;
+			default: freq = input_boost_freq_big; break;
+		}
 	else
-		freq = input_boost_freq_prime;
+		switch (kp_active_mode()) {
+			case 3: freq = 1401600; break;
+			default: freq = input_boost_freq_prime; break;
+		}
 	return min(freq, policy->max);
 }
 
@@ -115,10 +126,25 @@ static void update_online_cpu_policy(void)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
-	unsigned long boost_jiffies = msecs_to_jiffies(input_boost_duration);
+	unsigned long boost_jiffies;
 
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
+
+	switch (kp_active_mode()) {
+		case 1:
+			boost_jiffies = 0;
+			break;
+		case 2:
+			boost_jiffies = msecs_to_jiffies(50);
+			break;
+		case 3:
+			boost_jiffies = msecs_to_jiffies(60);
+                        break;
+		default:
+			boost_jiffies = msecs_to_jiffies(input_boost_duration);
+                        break;
+	}
 
 	if (!boost_jiffies)
 		return;

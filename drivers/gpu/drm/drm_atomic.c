@@ -40,9 +40,7 @@
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
 
-#ifdef CONFIG_KPROFILES
 extern int kp_active_mode(void);
-#endif
 
 void __drm_crtc_commit_free(struct kref *kref)
 {
@@ -2619,12 +2617,10 @@ static int __drm_mode_atomic_ioctl(struct drm_device *dev, void *data,
 
 	/* Boost CPU and DDR when committing a new frame */
 	if (!(arg->flags & DRM_MODE_ATOMIC_TEST_ONLY)) {
-		#ifdef CONFIG_KPROFILES
 		if (kp_active_mode() == 0 || kp_active_mode() == 2 || kp_active_mode() == 3) {
 			cpu_input_boost_kick();
 			devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
 		}
-		#endif
 	}
 
 	drm_modeset_acquire_init(&ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE);

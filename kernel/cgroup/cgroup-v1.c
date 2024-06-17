@@ -16,6 +16,11 @@
 #include <linux/binfmts.h>
 #include <trace/events/cgroup.h>
 
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
+
+extern int kp_active_mode(void);
+
 /*
  * pidlists linger the following amount before being destroyed.  The goal
  * is avoiding frequent destruction in the middle of consecutive read calls
@@ -539,6 +544,22 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 		goto out_finish;
 
 	ret = cgroup_attach_task(cgrp, task, threadgroup);
+
+	if (!ret && !threadgroup &&
+		memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
+		task_is_zygote(task->parent)) {
+			switch (kp_active_mode()) {
+				case 2:
+					cpu_input_boost_kick_max(500);
+					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 500);
+					break;
+				case 3:
+					cpu_input_boost_kick_max(700);
+					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 700);
+					break;
+				default: break;
+		}
+	}
 
 out_finish:
 	cgroup_procs_write_finish(task);

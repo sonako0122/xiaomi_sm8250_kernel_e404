@@ -104,10 +104,15 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
+
 #include <trace/events/sched.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
+
+extern int kp_active_mode(void);
 
 /*
  * Minimum number of threads to boot the kernel
@@ -2386,6 +2391,20 @@ long _do_fork(unsigned long clone_flags,
 	struct task_struct *p;
 	int trace = 0;
 	long nr;
+
+	if (task_is_zygote(current)) {
+		switch (kp_active_mode()) {
+			case 2:
+				cpu_input_boost_kick_max(60);
+				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 60);
+				break;
+			case 3:
+				cpu_input_boost_kick_max(80);
+				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 80);
+				break;
+			default: break;
+		}
+	}
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When
