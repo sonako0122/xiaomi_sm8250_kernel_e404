@@ -9,7 +9,6 @@
 #include <linux/cpufreq.h>
 #include <linux/input.h>
 #include <linux/kthread.h>
-#include <linux/moduleparam.h>
 #include <drm/drm_notifier_mi.h>
 #include <linux/slab.h>
 #include <linux/version.h>
@@ -19,42 +18,18 @@
 #include <uapi/linux/sched/types.h>
 #endif
 
-static unsigned int input_boost_freq_little __read_mostly =
-	CONFIG_INPUT_BOOST_FREQ_LP;
-static unsigned int input_boost_freq_big __read_mostly =
-	CONFIG_INPUT_BOOST_FREQ_PERF;
-static unsigned int input_boost_freq_prime __read_mostly =
-	CONFIG_INPUT_BOOST_FREQ_PRIME;
-static unsigned int max_boost_freq_little __read_mostly =
-	CONFIG_MAX_BOOST_FREQ_LP;
-static unsigned int max_boost_freq_big __read_mostly =
-	CONFIG_MAX_BOOST_FREQ_PERF;
-static unsigned int max_boost_freq_prime __read_mostly =
-	CONFIG_MAX_BOOST_FREQ_PRIME;
-static unsigned int cpu_freq_min_little __read_mostly =
-	CONFIG_CPU_FREQ_MIN_LP;
-static unsigned int cpu_freq_min_big __read_mostly =
-	CONFIG_CPU_FREQ_MIN_PERF;
-static unsigned int cpu_freq_min_prime __read_mostly =
-	CONFIG_CPU_FREQ_MIN_PRIME;
+static unsigned int input_boost_freq_little __read_mostly = 1344000;
+static unsigned int input_boost_freq_big __read_mostly = 1056000;
+static unsigned int input_boost_freq_prime __read_mostly = 1190400;
+static unsigned int max_boost_freq_little __read_mostly = 1804800;
+static unsigned int max_boost_freq_big __read_mostly = 2246400;
+static unsigned int max_boost_freq_prime __read_mostly = 2553600;
+static unsigned int cpu_freq_min_little __read_mostly = 691200;
+static unsigned int cpu_freq_min_big __read_mostly = 710400;
+static unsigned int cpu_freq_min_prime __read_mostly = 844800;
 
-static unsigned short input_boost_duration __read_mostly =
-	CONFIG_INPUT_BOOST_DURATION_MS;
-static unsigned short wake_boost_duration __read_mostly =
-	CONFIG_WAKE_BOOST_DURATION_MS;
-
-module_param(input_boost_freq_little, uint, 0644);
-module_param(input_boost_freq_big, uint, 0644);
-module_param(input_boost_freq_prime, uint, 0644);
-module_param(max_boost_freq_little, uint, 0644);
-module_param(max_boost_freq_big, uint, 0644);
-module_param(max_boost_freq_prime, uint, 0644);
-module_param(cpu_freq_min_little, uint, 0644);
-module_param(cpu_freq_min_big, uint, 0644);
-module_param(cpu_freq_min_prime, uint, 0644);
-
-module_param(input_boost_duration, short, 0644);
-module_param(wake_boost_duration, short, 0644);
+static unsigned short input_boost_duration __read_mostly = 50;
+static unsigned short wake_boost_duration __read_mostly = 0;
 
 enum {
 	SCREEN_OFF,
@@ -88,13 +63,12 @@ static unsigned int get_input_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = max(input_boost_freq_little, cpu_freq_min_little);
+		freq = input_boost_freq_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = max(input_boost_freq_big, cpu_freq_min_big);
+		freq = input_boost_freq_big;
 	else
-                freq = max(input_boost_freq_prime, cpu_freq_min_prime);
-                return min(freq, policy->max);
-
+		freq = input_boost_freq_prime;
+	return min(freq, policy->max);
 }
 
 static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
@@ -102,12 +76,12 @@ static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = max(max_boost_freq_little, cpu_freq_min_little);
+		freq = max_boost_freq_little;
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = max(max_boost_freq_big, cpu_freq_min_big);
-        else
-                freq = max(max_boost_freq_prime, cpu_freq_min_prime);
-		return min(freq, policy->max);
+		freq = max_boost_freq_big;
+	else
+		freq = max_boost_freq_prime;
+	return min(freq, policy->max);
 }
 
 static unsigned int get_min_freq(struct cpufreq_policy *policy)
@@ -120,7 +94,6 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 		freq = cpu_freq_min_big;
 	else
 		freq = cpu_freq_min_prime;
-
 	return max(freq, policy->cpuinfo.min_freq);
 }
 
@@ -142,18 +115,18 @@ static void update_online_cpu_policy(void)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
+	unsigned long boost_jiffies = msecs_to_jiffies(input_boost_duration);
+
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
-	if (!input_boost_duration)
+	if (!boost_jiffies)
 		return;
 
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
-			      msecs_to_jiffies(input_boost_duration))) {
-		set_bit(INPUT_BOOST, &b->state);
+			      boost_jiffies))
 		wake_up(&b->boost_waitq);
-	}
 }
 
 void cpu_input_boost_kick(void)
@@ -164,16 +137,20 @@ void cpu_input_boost_kick(void)
 }
 
 static void __cpu_input_boost_kick_max(struct boost_drv *b,
-				       unsigned int duration_ms)
+				       unsigned int max_duration_ms)
 {
-	unsigned long boost_jiffies, curr_expires, new_expires;
+	unsigned long curr_expires, new_expires;
+	unsigned long max_boost_jiffies = msecs_to_jiffies(max_duration_ms);
 
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;
 
+	if (!max_boost_jiffies)
+		return;
+
 	do {
 		curr_expires = atomic_long_read(&b->max_boost_expires);
-		new_expires = jiffies + boost_jiffies;
+		new_expires = jiffies + max_boost_jiffies;
 
 		/* Skip this boost if there's a longer boost in effect */
 		if (time_after(curr_expires, new_expires))
@@ -183,18 +160,15 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 
 	set_bit(MAX_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
-			      boost_jiffies)) {
-		/* Set the bit again in case we raced with the unboost worker */
-		set_bit(MAX_BOOST, &b->state);
+			      max_boost_jiffies))
 		wake_up(&b->boost_waitq);
-	}
 }
 
-void cpu_input_boost_kick_max(unsigned int duration_ms)
+void cpu_input_boost_kick_max(unsigned int max_duration_ms)
 {
 	struct boost_drv *b = &boost_drv_g;
 
-	__cpu_input_boost_kick_max(b, duration_ms);
+	__cpu_input_boost_kick_max(b, max_duration_ms);
 }
 
 static void input_unboost_worker(struct work_struct *work)
@@ -229,17 +203,15 @@ static int cpu_boost_thread(void *data)
 		bool should_stop = false;
 		unsigned long curr_state;
 
-		wait_event_interruptible(b->boost_waitq,
+		wait_event(b->boost_waitq,
 			(curr_state = READ_ONCE(b->state)) != old_state ||
 			(should_stop = kthread_should_stop()));
 
 		if (should_stop)
 			break;
 
-		if (old_state != curr_state) {
-		        update_online_cpu_policy();
-			old_state = curr_state;
-		}
+		old_state = curr_state;
+		update_online_cpu_policy();
 	}
 
 	return 0;
