@@ -27,6 +27,9 @@ static unsigned int max_boost_freq_prime __read_mostly = 2553600;
 static unsigned int cpu_freq_min_little __read_mostly = 691200;
 static unsigned int cpu_freq_min_big __read_mostly = 710400;
 static unsigned int cpu_freq_min_prime __read_mostly = 844800;
+static unsigned int cpu_freq_max_little __read_mostly = 1804800;
+static unsigned int cpu_freq_max_big __read_mostly = 2419200;
+static unsigned int cpu_freq_max_prime __read_mostly = 3187200;
 
 static unsigned short input_boost_duration __read_mostly = 40;
 static unsigned short wake_boost_duration __read_mostly = 0;
@@ -108,6 +111,22 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 	return max(freq, policy->cpuinfo.min_freq);
 }
 
+static unsigned int get_max_freq(struct cpufreq_policy *policy)
+{
+	unsigned int freq;
+
+	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
+		freq = cpu_freq_max_little;
+	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
+		freq = cpu_freq_max_big;
+	else
+		switch (kp_active_mode()) {
+			case 0: freq = 2841600; break;
+			case 1: freq = 2841600; break;
+			default: freq = cpu_freq_max_prime; break;
+		}
+	return min(freq, policy->cpuinfo.max_freq);
+}
 
 static void update_online_cpu_policy(void)
 {
@@ -255,6 +274,7 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
 		policy->min = get_min_freq(policy);
+		policy->max = get_max_freq(policy);
 		return NOTIFY_OK;
 	}
 
@@ -272,6 +292,7 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 		policy->min = get_input_boost_freq(policy);
 	else
 		policy->min = get_min_freq(policy);
+		policy->max = get_max_freq(policy);
 
 	return NOTIFY_OK;
 }
