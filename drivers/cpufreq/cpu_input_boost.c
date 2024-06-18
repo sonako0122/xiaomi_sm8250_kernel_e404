@@ -21,18 +21,25 @@
 static unsigned int input_boost_freq_little __read_mostly = 1344000;
 static unsigned int input_boost_freq_big __read_mostly = 1056000;
 static unsigned int input_boost_freq_prime __read_mostly = 1190400;
+
 static unsigned int max_boost_freq_little __read_mostly = 1804800;
 static unsigned int max_boost_freq_big __read_mostly = 2246400;
 static unsigned int max_boost_freq_prime __read_mostly = 2553600;
+
 static unsigned int cpu_freq_min_little __read_mostly = 691200;
 static unsigned int cpu_freq_min_big __read_mostly = 710400;
 static unsigned int cpu_freq_min_prime __read_mostly = 844800;
+
 static unsigned int cpu_freq_max_little __read_mostly = 1804800;
 static unsigned int cpu_freq_max_big __read_mostly = 2419200;
 static unsigned int cpu_freq_max_prime __read_mostly = 3187200;
 
 static unsigned short input_boost_duration __read_mostly = 40;
 static unsigned short wake_boost_duration __read_mostly = 0;
+
+static unsigned int kp_boost_little __read_mostly = 1708800;
+static unsigned int kp_boost_big __read_mostly = 1478400;
+static unsigned int kp_boost_prime __read_mostly = 1401680;
 
 extern int kp_active_mode(void);
 
@@ -69,18 +76,30 @@ static unsigned int get_input_boost_freq(struct cpufreq_policy *policy)
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
 		switch (kp_active_mode()) {
-			case 3: freq = 1708800; break;
-			default: freq = input_boost_freq_little; break;
+			case 3:
+			freq = max(kp_boost_little, cpu_freq_min_little);
+			break;
+			default:
+			freq = max(input_boost_freq_little, cpu_freq_min_little);
+			break;
 		}
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
 		switch (kp_active_mode()) {
-			case 3: freq = 1478400; break;
-			default: freq = input_boost_freq_big; break;
+			case 3:
+			freq = max(kp_boost_big, cpu_freq_min_big);
+			break;
+			default:
+			freq = max(input_boost_freq_big, cpu_freq_min_big);
+			break;
 		}
 	else
 		switch (kp_active_mode()) {
-			case 3: freq = 1401600; break;
-			default: freq = input_boost_freq_prime; break;
+			case 3:
+			freq = max(kp_boost_prime, cpu_freq_min_prime);
+			break;
+			default:
+			freq = max(input_boost_freq_prime, cpu_freq_min_prime);
+			break;
 		}
 	return min(freq, policy->max);
 }
@@ -90,11 +109,11 @@ static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
 	unsigned int freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = max_boost_freq_little;
+		freq = max(max_boost_freq_little, cpu_freq_min_little);
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
-		freq = max_boost_freq_big;
+		freq = max(max_boost_freq_big, cpu_freq_min_big);
 	else
-		freq = max_boost_freq_prime;
+		freq = max(max_boost_freq_prime, cpu_freq_min_prime);
 	return min(freq, policy->max);
 }
 
@@ -170,8 +189,10 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 
 	set_bit(INPUT_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->input_unboost,
-			      boost_jiffies))
+			      boost_jiffies)) {
+		set_bit(INPUT_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
+	}
 }
 
 void cpu_input_boost_kick(void)
@@ -205,8 +226,10 @@ static void __cpu_input_boost_kick_max(struct boost_drv *b,
 
 	set_bit(MAX_BOOST, &b->state);
 	if (!mod_delayed_work(system_unbound_wq, &b->max_unboost,
-			      max_boost_jiffies))
+			      max_boost_jiffies)) {
+		set_bit(MAX_BOOST, &b->state);
 		wake_up(&b->boost_waitq);
+	}
 }
 
 void cpu_input_boost_kick_max(unsigned int max_duration_ms)
@@ -248,15 +271,17 @@ static int cpu_boost_thread(void *data)
 		bool should_stop = false;
 		unsigned long curr_state;
 
-		wait_event(b->boost_waitq,
+		wait_event_interruptible(b->boost_waitq,
 			(curr_state = READ_ONCE(b->state)) != old_state ||
 			(should_stop = kthread_should_stop()));
 
 		if (should_stop)
 			break;
 
-		old_state = curr_state;
-		update_online_cpu_policy();
+		if (old_state != curr_state) {
+		        update_online_cpu_policy();
+			old_state = curr_state;
+		}
 	}
 
 	return 0;
@@ -408,6 +433,7 @@ static int __init cpu_input_boost_init(void)
 	int ret;
 
 	b->cpu_notif.notifier_call = cpu_notifier_cb;
+	b->cpu_notif.priority = INT_MAX - 2;
 	ret = cpufreq_register_notifier(&b->cpu_notif, CPUFREQ_POLICY_NOTIFIER);
 	if (ret) {
 		pr_err("Failed to register cpufreq notifier, err: %d\n", ret);
