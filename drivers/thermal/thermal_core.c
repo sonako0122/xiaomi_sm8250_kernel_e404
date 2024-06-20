@@ -83,11 +83,9 @@ const char *ambient_sensor;
 static char ambient_sensor_temp[128];
 
 static int lock_enable = 0;
-static int lock_sconfig = 10;
+static int lock_sconfig = 0;
 module_param(lock_enable, int, 0644);
 module_param(lock_sconfig, int, 0644);
-
-extern int kp_active_mode(void);
 
 /*
  * Governor section: set of functions to handle thermal governors
@@ -1745,10 +1743,7 @@ thermal_sconfig_store(struct device *dev,
 
 	ret = kstrtoint(buf, 10, &val);
 
-	if (lock_enable || kp_active_mode() == 3)
-		if (kp_active_mode() == 3)
-			atomic_set(&switch_mode, 10);
-		else
+	if (lock_enable)
 			atomic_set(&switch_mode, lock_sconfig);
 	else
 		atomic_set(&switch_mode, val);
