@@ -52,8 +52,10 @@ static DEFINE_SPINLOCK(suspend_lock);
 #define TAG "msm_adreno_tz: "
 
 #if 1
-static unsigned int adrenoboost = 1;
+static u8 adrenoboost = 1;
 #endif
+
+extern int kp_active_mode(void);
 
 static u64 suspend_time;
 static u64 suspend_start;
@@ -412,6 +414,12 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 	if (result) {
 		pr_err(TAG "get_status failed %d\n", result);
 		return result;
+	}
+
+	switch (kp_active_mode()) {
+		case 1: adrenoboost = 0; break;
+		case 3: adrenoboost = 2; break;
+		default: adrenoboost = 1; break;
 	}
 
 	*freq = stats->current_frequency;
