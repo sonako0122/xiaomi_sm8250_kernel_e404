@@ -324,7 +324,7 @@ unsigned long schedutil_cpu_util(int cpu, unsigned long util_cfs,
 	 * utilization (PELT windows are synchronized) we can directly add them
 	 * to obtain the CPU's actual utilization.
 	 */
-	util = util_cfs + cpu_util_rt(rq);
+	util = apply_dvfs_headroom(util_cfs + cpu_util_rt(rq), cpu);
 	util += cpu_util_dl(rq);
 
 	/*
