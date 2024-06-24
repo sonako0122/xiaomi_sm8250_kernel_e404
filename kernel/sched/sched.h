@@ -3354,3 +3354,24 @@ struct sched_avg_stats {
 extern void sched_get_nr_running_avg(struct sched_avg_stats *stats);
 
 extern u64 avg_vruntime(struct cfs_rq *cfs_rq);
+
+static inline unsigned long apply_dvfs_headroom(unsigned long util, int cpu)
+{
+        unsigned long capacity = capacity_orig_of(cpu);
+        unsigned long headroom;
+
+        if (util >= capacity)
+                return util;
+
+        /*
+         * Taper the boosting at e top end as these are expensive and
+         * we don't need that much of a big headroom as we approach max
+         * capacity
+         *
+         */
+        headroom = (capacity - util);
+        /* formula: headroom * (1.X - 1) == headroom * 0.X */
+        headroom = headroom *
+                (1280 - SCHED_CAPACITY_SCALE) >> SCHED_CAPACITY_SHIFT;
+        return util + headroom;
+}
