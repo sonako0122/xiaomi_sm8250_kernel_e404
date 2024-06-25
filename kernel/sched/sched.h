@@ -36,7 +36,6 @@
 #include <uapi/linux/sched/types.h>
 
 #include <linux/binfmts.h>
-#include <linux/bitops.h>
 #include <linux/blkdev.h>
 #include <linux/compat.h>
 #include <linux/context_tracking.h>
@@ -2515,11 +2514,9 @@ extern void cfs_bandwidth_usage_dec(void);
 #ifdef CONFIG_NO_HZ_COMMON
 #define NOHZ_BALANCE_KICK_BIT	0
 #define NOHZ_STATS_KICK_BIT	1
-#define NOHZ_NEWILB_KICK_BIT	2
 
 #define NOHZ_BALANCE_KICK	BIT(NOHZ_BALANCE_KICK_BIT)
 #define NOHZ_STATS_KICK		BIT(NOHZ_STATS_KICK_BIT)
-#define NOHZ_NEWILB_KICK	BIT(NOHZ_NEWILB_KICK_BIT)
 
 #define NOHZ_KICK_MASK	(NOHZ_BALANCE_KICK | NOHZ_STATS_KICK)
 
@@ -2530,11 +2527,6 @@ extern void nohz_balance_exit_idle(struct rq *rq);
 static inline void nohz_balance_exit_idle(struct rq *rq) { }
 #endif
 
-#if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
-extern void nohz_run_idle_balance(int cpu);
-#else
-static inline void nohz_run_idle_balance(int cpu) { }
-#endif
 
 #ifdef CONFIG_SMP
 static inline
@@ -3354,24 +3346,3 @@ struct sched_avg_stats {
 extern void sched_get_nr_running_avg(struct sched_avg_stats *stats);
 
 extern u64 avg_vruntime(struct cfs_rq *cfs_rq);
-
-static inline unsigned long apply_dvfs_headroom(unsigned long util, int cpu)
-{
-        unsigned long capacity = capacity_orig_of(cpu);
-        unsigned long headroom;
-
-        if (util >= capacity)
-                return util;
-
-        /*
-         * Taper the boosting at e top end as these are expensive and
-         * we don't need that much of a big headroom as we approach max
-         * capacity
-         *
-         */
-        headroom = (capacity - util);
-        /* formula: headroom * (1.X - 1) == headroom * 0.X */
-        headroom = headroom *
-                (1280 - SCHED_CAPACITY_SCALE) >> SCHED_CAPACITY_SHIFT;
-        return util + headroom;
-}
