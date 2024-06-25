@@ -307,12 +307,6 @@ static void hif_get_poll_times_hist_str(struct qca_napi_stat *stats, char *buf,
 static
 void hif_exec_fill_poll_time_histogram(struct hif_exec_context *hif_ext_group)
 {
-	struct qca_napi_stat *napi_stat;
-	unsigned long long poll_time_ns;
-	uint32_t poll_time_us;
-	uint32_t bucket_size_us = 500;
-	uint32_t bucket;
-	uint32_t cpu_id = qdf_get_cpu();
 }
 
 /**
@@ -323,12 +317,6 @@ void hif_exec_fill_poll_time_histogram(struct hif_exec_context *hif_ext_group)
  */
 static bool hif_exec_poll_should_yield(struct hif_exec_context *hif_ext_group)
 {
-	bool time_limit_reached = false;
-	unsigned long long poll_time_ns;
-	int cpu_id = qdf_get_cpu();
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
-	struct hif_config_info *cfg = &scn->hif_config;
-
 	return 0;
 }
 
