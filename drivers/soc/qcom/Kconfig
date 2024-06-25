@@ -37,7 +37,6 @@ config BUG_ON_HW_MEM_ONLINE_FAIL
 config QCOM_GENI_SE
 	tristate "QCOM GENI Serial Engine Driver"
 	depends on ARCH_QCOM || COMPILE_TEST
-	select REGMAP_MMIO
 	help
 	  This driver is used to manage Generic Interface (GENI) firmware based
 	  Qualcomm Technologies, Inc. Universal Peripheral (QUP) Wrapper. This
@@ -971,7 +970,7 @@ config ICNSS
 
 config ICNSS_DEBUG
 	bool "ICNSS debug support"
-	depends on ICNSS
+	depends on ICNSS && DEBUG_FS
 	help
 	  Say 'Y' here to enable ICNSS driver debug support. Debug support
 	  primarily consists of logs consisting of information related to

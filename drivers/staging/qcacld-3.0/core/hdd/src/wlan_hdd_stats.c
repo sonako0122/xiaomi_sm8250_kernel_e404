@@ -5043,13 +5043,7 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (!qdf_ctx)
 		return -EINVAL;
 
-	errno = wlan_hdd_qmi_get_sync_resume(hdd_ctx, qdf_ctx->dev);
-	if (errno)
-		return errno;
-
 	errno = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
-
-	wlan_hdd_qmi_put_suspend(hdd_ctx, qdf_ctx->dev);
 
 	return errno;
 }
