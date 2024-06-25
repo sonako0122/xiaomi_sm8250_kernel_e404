@@ -512,7 +512,7 @@ endif
 
 dtbo-$(CONFIG_BOARD_MUNCH) += \
                 munch-sm8250-overlay.dtbo
-munch-sm8250-overlay.dtbo-base := kona.dtb kona-v2.dtb kona-v2.1.dtb
+munch-sm8250-overlay.dtbo-base := kona-v2.1.dtb
 
 always		:= $(dtb-y)
 subdir-y	:= $(dts-dirs)
