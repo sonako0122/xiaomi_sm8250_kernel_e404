@@ -31,7 +31,7 @@ struct boost_dev {
 
 extern int kp_active_mode(void);
 
-static unsigned short devfreq_boost_duration __read_mostly = 40;
+static unsigned short devfreq_boost_duration __read_mostly = 60;
 static unsigned short devfreq_wake_boost_duration __read_mostly = 0;
 
 struct df_boost_drv {
