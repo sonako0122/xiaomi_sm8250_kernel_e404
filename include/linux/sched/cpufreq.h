@@ -19,6 +19,8 @@
 #ifdef CONFIG_CPU_FREQ
 struct cpufreq_policy;
 
+extern int kp_active_mode(void);
+
 struct update_util_data {
        void (*func)(struct update_util_data *data, u64 time, unsigned int flags);
 };
@@ -37,7 +39,11 @@ static inline unsigned long map_util_freq(unsigned long util,
 
 static inline unsigned long map_util_perf(unsigned long util)
 {
-	return util + (util / 3);
+	switch (kp_active_mode()) {
+		case 1: return util + (util >> 2); break;
+		case 3: return util + (util / 2); break;
+		default: return util + (util / 3); break;
+	}
 }
 #endif /* CONFIG_CPU_FREQ */
 
