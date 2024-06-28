@@ -1109,10 +1109,13 @@ static char *files_array[] = {
 	"lpdumpd",
 	"statsd",
 	"atrace",
+	"statsd",
 };
 
 static char *paths_array[] = {
 	"/system/bin",
+	"/apex/com.android.os.statsd/bin",
+	"/vendor/bin",
 };
 
 static bool string_compare(const char *arg1, const char *arg2)
