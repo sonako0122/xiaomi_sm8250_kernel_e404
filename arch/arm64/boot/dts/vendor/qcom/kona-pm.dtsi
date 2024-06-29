@@ -50,7 +50,7 @@
 					label = "wfi";
 					qcom,psci-cpu-mode = <0x1>;
 					qcom,entry-latency-us = <17>;
-					qcom,exit-latency-us = <51>;
+					qcom,exit-latency-us = <43>;
 					qcom,min-residency-us = <88>;
 				};
 
@@ -80,7 +80,7 @@
 					label = "wfi";
 					qcom,psci-cpu-mode = <0x1>;
 					qcom,entry-latency-us = <17>;
-					qcom,exit-latency-us = <73>;
+					qcom,exit-latency-us = <43>;
 					qcom,min-residency-us = <83>;
 				};
 
@@ -89,7 +89,7 @@
 					label = "rail-pc";
 					qcom,psci-cpu-mode = <0x4>;
 					qcom,entry-latency-us = <136>;
-					qcom,exit-latency-us = <1461>;
+					qcom,exit-latency-us = <1061>;
 					qcom,min-residency-us = <3688>;
 					qcom,is-reset;
 					qcom,use-broadcast-timer;
