@@ -19,7 +19,7 @@
 #endif
 
 static unsigned int input_boost_freq_little __read_mostly = 1344000;
-static unsigned int input_boost_freq_big __read_mostly = 1056000;
+static unsigned int input_boost_freq_big __read_mostly = 1382400;
 static unsigned int input_boost_freq_prime __read_mostly = 1190400;
 
 static unsigned int max_boost_freq_little __read_mostly = 1804800;
@@ -30,9 +30,9 @@ static unsigned int cpu_freq_min_little __read_mostly = 691200;
 static unsigned int cpu_freq_min_big __read_mostly = 710400;
 static unsigned int cpu_freq_min_prime __read_mostly = 844800;
 
-static unsigned int cpu_freq_max_little __read_mostly = 1804800;
-static unsigned int cpu_freq_max_big __read_mostly = 2419200;
-static unsigned int cpu_freq_max_prime __read_mostly = 3187200;
+// static unsigned int cpu_freq_max_little __read_mostly = 1804800;
+// static unsigned int cpu_freq_max_big __read_mostly = 2419200;
+// static unsigned int cpu_freq_max_prime __read_mostly = 3187200;
 
 static unsigned short input_boost_duration __read_mostly = 40;
 static unsigned short wake_boost_duration __read_mostly = 0;
@@ -130,7 +130,7 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 	return max(freq, policy->cpuinfo.min_freq);
 }
 
-static unsigned int get_max_freq(struct cpufreq_policy *policy)
+/* static unsigned int get_max_freq(struct cpufreq_policy *policy)
 {
 	unsigned int freq;
 
@@ -146,6 +146,7 @@ static unsigned int get_max_freq(struct cpufreq_policy *policy)
 		}
 	return min(freq, policy->cpuinfo.max_freq);
 }
+*/
 
 static void update_online_cpu_policy(void)
 {
@@ -299,7 +300,7 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 	/* Unboost when the screen is off */
 	if (test_bit(SCREEN_OFF, &b->state)) {
 		policy->min = get_min_freq(policy);
-		policy->max = get_max_freq(policy);
+		// policy->max = get_max_freq(policy);
 		return NOTIFY_OK;
 	}
 
@@ -317,7 +318,7 @@ static int cpu_notifier_cb(struct notifier_block *nb, unsigned long action,
 		policy->min = get_input_boost_freq(policy);
 	else
 		policy->min = get_min_freq(policy);
-		policy->max = get_max_freq(policy);
+		// policy->max = get_max_freq(policy);
 
 	return NOTIFY_OK;
 }
@@ -433,7 +434,7 @@ static int __init cpu_input_boost_init(void)
 	int ret;
 
 	b->cpu_notif.notifier_call = cpu_notifier_cb;
-	b->cpu_notif.priority = INT_MAX - 2;
+	// b->cpu_notif.priority = INT_MAX - 2;
 	ret = cpufreq_register_notifier(&b->cpu_notif, CPUFREQ_POLICY_NOTIFIER);
 	if (ret) {
 		pr_err("Failed to register cpufreq notifier, err: %d\n", ret);
