@@ -699,12 +699,13 @@ KBUILD_AFLAGS   += -mcpu=cortex-a77 -mtune=cortex-a77
 #Enable MLGO
 KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
 KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
+KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
 #Math related flags
 #KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
 #Other flags
-KBUILD_CFLAGS   += -fcf-protection=none -funroll-loops --cuda-path=/dev/null
+KBUILD_CFLAGS   += -fcf-protection=none -fno-semantic-interposition -fno-signed-zeros
 #-O3 optimization
-KBUILD_CFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod
+KBUILD_CFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod --cuda-path=/dev/null
 KBUILD_AFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod
 KBUILD_LDFLAGS  += -O3 --plugin-opt=O3
 else
@@ -714,9 +715,9 @@ KBUILD_LDFLAGS  += -O2
 
 ifdef CONFIG_INLINE_OPTIMIZATION
 ifdef CONFIG_CC_IS_CLANG
-KBUILD_CFLAGS	+= -mllvm -inline-threshold=2500
+KBUILD_CFLAGS	+= -mllvm -inline-threshold=1300
 KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=2000
-KBUILD_CFLAGS	+= -mllvm -unroll-threshold=1200
+KBUILD_CFLAGS	+= -mllvm -unroll-threshold=900
 else ifdef CONFIG_CC_IS_GCC
 KBUILD_CFLAGS	+= --param max-inline-insns-single=600
 KBUILD_CFLAGS	+= --param max-inline-insns-auto=750
