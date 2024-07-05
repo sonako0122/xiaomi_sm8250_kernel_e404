@@ -82,7 +82,7 @@ static struct boost_drv boost_drv_g __read_mostly = {
 
 static unsigned int get_input_boost_freq(struct cpufreq_policy *policy)
 {
-	unsigned int freq;
+	unsigned int freq = 0;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
 		switch (kp_active_mode()) {
@@ -172,7 +172,7 @@ static void update_online_cpu_policy(void)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
-	unsigned long boost_jiffies;
+	unsigned long boost_jiffies = 0;
 
 	if (test_bit(SCREEN_OFF, &b->state))
 		return;

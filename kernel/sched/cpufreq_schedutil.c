@@ -77,6 +77,8 @@ static DEFINE_PER_CPU(struct sugov_cpu, sugov_cpu);
 static unsigned int stale_ns;
 static DEFINE_PER_CPU(struct sugov_tunables *, cached_tunables);
 
+extern int kp_active_mode(void);
+
 /************************ Governor internals ***********************/
 
 static bool sugov_should_update_freq(struct sugov_policy *sg_policy, u64 time)
@@ -374,7 +376,11 @@ unsigned long sugov_effective_cpu_perf(int cpu, unsigned long actual,
 				 unsigned long max)
 {
 	/* Add dvfs headroom to actual utilization */
-	actual = apply_dvfs_headroom(cpu, actual, max);
+	if (kp_active_mode() != 0 || kp_active_mode () != 1)
+		actual = map_util_perf(actual);
+	else
+		actual = apply_dvfs_headroom(cpu, actual, max);
+
 	/* Actually we don't need to target the max performance */
 	if (actual < max)
 		max = actual;
