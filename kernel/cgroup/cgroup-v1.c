@@ -550,12 +550,12 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 		task_is_zygote(task->parent)) {
 			switch (kp_active_mode()) {
 				case 2:
-					cpu_input_boost_kick_max(500);
-					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 500);
+					cpu_input_boost_kick_max(1000);
+					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 1000);
 					break;
 				case 3:
-					cpu_input_boost_kick_max(700);
-					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 700);
+					cpu_input_boost_kick_max(1400);
+					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 1400);
 					break;
 				default: break;
 		}

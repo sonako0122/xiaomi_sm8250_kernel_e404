@@ -2395,12 +2395,12 @@ long _do_fork(unsigned long clone_flags,
 	if (task_is_zygote(current)) {
 		switch (kp_active_mode()) {
 			case 2:
-				cpu_input_boost_kick_max(60);
-				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 60);
+				cpu_input_boost_kick_max(40);
+				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 40);
 				break;
 			case 3:
-				cpu_input_boost_kick_max(80);
-				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 80);
+				cpu_input_boost_kick_max(60);
+				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 60);
 				break;
 			default: break;
 		}

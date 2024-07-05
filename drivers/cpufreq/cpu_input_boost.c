@@ -18,9 +18,22 @@
 #include <uapi/linux/sched/types.h>
 #endif
 
-static unsigned int input_boost_freq_little __read_mostly = 1344000;
-static unsigned int input_boost_freq_big __read_mostly = 1382400;
-static unsigned int input_boost_freq_prime __read_mostly = 1190400;
+static unsigned int kp3_boost_little __read_mostly = 1804800;
+static unsigned int kp3_boost_big __read_mostly = 1766400;
+static unsigned int kp3_boost_prime __read_mostly = 1401600;
+
+static unsigned int kp2_boost_little __read_mostly = 1708800;
+static unsigned int kp2_boost_big __read_mostly = 1478400;
+static unsigned int kp2_boost_prime __read_mostly = 1401600;
+
+// No boost for kp mode 1
+// static unsigned int kp2_boost_little __read_mostly = 0;
+// static unsigned int kp2_boost_big __read_mostly = 0;
+// static unsigned int kp2_boost_prime __read_mostly = 0;
+
+static unsigned int kp0_boost_little __read_mostly = 1344000;
+static unsigned int kp0_boost_big __read_mostly = 1056000;
+static unsigned int kp0_boost_prime __read_mostly = 1190400;
 
 static unsigned int max_boost_freq_little __read_mostly = 1804800;
 static unsigned int max_boost_freq_big __read_mostly = 2246400;
@@ -37,9 +50,6 @@ static unsigned int cpu_freq_min_prime __read_mostly = 844800;
 static unsigned short input_boost_duration __read_mostly = 40;
 static unsigned short wake_boost_duration __read_mostly = 0;
 
-static unsigned int kp_boost_little __read_mostly = 1708800;
-static unsigned int kp_boost_big __read_mostly = 1478400;
-static unsigned int kp_boost_prime __read_mostly = 1401680;
 
 extern int kp_active_mode(void);
 
@@ -76,31 +86,26 @@ static unsigned int get_input_boost_freq(struct cpufreq_policy *policy)
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
 		switch (kp_active_mode()) {
-			case 3:
-			freq = max(kp_boost_little, cpu_freq_min_little);
-			break;
-			default:
-			freq = max(input_boost_freq_little, cpu_freq_min_little);
-			break;
+			case 1: break; 
+			case 2: freq = max(kp2_boost_little, cpu_freq_min_little); break;
+			case 3: freq = max(kp3_boost_little, cpu_freq_min_little); break;
+			default: freq = max(kp0_boost_little, cpu_freq_min_little); break;
 		}
 	else if (cpumask_test_cpu(policy->cpu, cpu_perf_mask))
 		switch (kp_active_mode()) {
-			case 3:
-			freq = max(kp_boost_big, cpu_freq_min_big);
-			break;
-			default:
-			freq = max(input_boost_freq_big, cpu_freq_min_big);
-			break;
+			case 1: break;
+			case 2: freq = max(kp2_boost_big, cpu_freq_min_big); break;
+			case 3: freq = max(kp3_boost_big, cpu_freq_min_big); break;
+			default: freq = max(kp0_boost_big, cpu_freq_min_big); break;
 		}
 	else
 		switch (kp_active_mode()) {
-			case 3:
-			freq = max(kp_boost_prime, cpu_freq_min_prime);
-			break;
-			default:
-			freq = max(input_boost_freq_prime, cpu_freq_min_prime);
-			break;
+			case 1: break;
+			case 2: freq = max(kp2_boost_prime, cpu_freq_min_prime); break;
+			case 3: freq = max(kp3_boost_prime, cpu_freq_min_prime); break;
+			default: freq = max(kp0_boost_prime, cpu_freq_min_prime); break;
 		}
+
 	return min(freq, policy->max);
 }
 
@@ -114,6 +119,7 @@ static unsigned int get_max_boost_freq(struct cpufreq_policy *policy)
 		freq = max(max_boost_freq_big, cpu_freq_min_big);
 	else
 		freq = max(max_boost_freq_prime, cpu_freq_min_prime);
+
 	return min(freq, policy->max);
 }
 
@@ -127,6 +133,7 @@ static unsigned int get_min_freq(struct cpufreq_policy *policy)
 		freq = cpu_freq_min_big;
 	else
 		freq = cpu_freq_min_prime;
+
 	return max(freq, policy->cpuinfo.min_freq);
 }
 
@@ -171,18 +178,10 @@ static void __cpu_input_boost_kick(struct boost_drv *b)
 		return;
 
 	switch (kp_active_mode()) {
-		case 1:
-			boost_jiffies = 0;
-			break;
-		case 2:
-			boost_jiffies = msecs_to_jiffies(50);
-			break;
-		case 3:
-			boost_jiffies = msecs_to_jiffies(60);
-                        break;
-		default:
-			boost_jiffies = msecs_to_jiffies(input_boost_duration);
-                        break;
+		case 1: break;
+		case 2: boost_jiffies = msecs_to_jiffies(50); break;
+		case 3: boost_jiffies = msecs_to_jiffies(60); break;
+		default: boost_jiffies = msecs_to_jiffies(input_boost_duration); break;
 	}
 
 	if (!boost_jiffies)
