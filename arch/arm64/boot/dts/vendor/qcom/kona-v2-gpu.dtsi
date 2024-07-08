@@ -9,19 +9,19 @@
 		compatible = "operating-points-v2";
 		opp-683000000 {
 			opp-hz = /bits/ 64 <683000000>;
-			opp-microvolt = <230>;
+			opp-microvolt = <256>;
 		};
 		opp-606852000 {
 			opp-hz = /bits/ 64 <606852000>;
-			opp-microvolt = <165>;
+			opp-microvolt = <180>;
 		};
 		opp-530710000 {
 			opp-hz = /bits/ 64 <530710000>;
-			opp-microvolt = <147>;
+			opp-microvolt = <155>;
 		};
 		opp-454568000 {
 			opp-hz = /bits/ 64 <454568000>;
-			opp-microvolt = <105>;
+			opp-microvolt = <110>;
 		};
 		opp-378426000 {
 			opp-hz = /bits/ 64 <378426000>;
