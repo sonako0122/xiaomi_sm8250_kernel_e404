@@ -16,7 +16,6 @@
 #include <linux/binfmts.h>
 #include <trace/events/cgroup.h>
 
-#include <linux/cpu_input_boost.h>
 #include <linux/devfreq_boost.h>
 
 extern int kp_active_mode(void);
@@ -550,11 +549,9 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 		task_is_zygote(task->parent)) {
 			switch (kp_active_mode()) {
 				case 2:
-					cpu_input_boost_kick_max(1000);
 					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 1000);
 					break;
 				case 3:
-					cpu_input_boost_kick_max(1400);
 					devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 1400);
 					break;
 				default: break;
