@@ -20,6 +20,8 @@
 
 #define IOWAIT_BOOST_MIN	(SCHED_CAPACITY_SCALE / 8)
 
+extern int kp_active_mode(void);
+
 struct sugov_tunables {
 	struct gov_attr_set	attr_set;
 	unsigned int		up_rate_limit_us;
@@ -361,11 +363,22 @@ unsigned long apply_dvfs_headroom(int cpu, unsigned long util, unsigned long max
 		return util;
 
 	if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
-		headroom = util + (util >> 1) + (util >> 2); // 1.75x
+		switch (kp_active_mode()) {
+			case 1: headroom = util + (util >> 1); break; // 1.5x
+			case 3: headroom = util + (util >> 0); break; // 2x
+			default: headroom = util + (util >> 1) + (util >> 2); break; // 1.75x
+		}
 	} else if (cpumask_test_cpu(cpu, cpu_perf_mask)) {
-		headroom = util + (util >> 1); // 1.5x
+		switch (kp_active_mode()) {
+			case 1: headroom = util + (util >> 2); break; // 1.25x
+			case 3: headroom = util + (util >> 1) + (util >> 2); break; // 1.75x
+			default: headroom = util + (util >> 1); break; // 1.5x
+		}
 	} else {
-		headroom = util; // 1x
+		switch (kp_active_mode()) {
+			case 3: headroom = util + (util >> 2); break; // 1.25x
+			default: headroom = util; break; // 1x
+		}
 	}
 
 	return headroom;
