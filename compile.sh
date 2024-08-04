@@ -13,49 +13,64 @@ AK3_DIR="$BASE_DIR/AnyKernel3"
 [[ "$@" == *dtbo* ]] && DTBO=1
 [[ "$@" == *neutron* ]] && export PATH="$BASE_DIR/neutron-clang/bin:$PATH" && CLANG="Neutron Clang" || export PATH="$BASE_DIR/aosp-clang/bin:$PATH" && CLANG="AOSP Clang"
 
+[[ "$@" == *underclock* ]] && {
+        # little
+        sed -i '/<1708800>,/c\<1708800>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        sed -i '/<1804800>;/c\//<1804800>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        # big
+        sed -i '/<2342400>,/c\<2342400>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        sed -i '/<2419200>;/c\//<2419200>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        # prime
+        sed -i '/<2553600>,/c\<2553600>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        sed -i '/<2649600>,/c\//<2649600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        sed -i '/<2745600>,/c\//<2745600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        sed -i '/<2841600>,/c\//<2841600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+        sed -i '/<3187200>;/c\//<3187200>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+}
+
 [[ "$@" == *munch* ]] && {
-sed -i '/is_apollo=/c\is_apollo=0;' $AK3_DIR/anykernel.sh
-sed -i '/is_munch=/c\is_munch=1;' $AK3_DIR/anykernel.sh
-sed -i '/is_alioth=/c\is_alioth=0;' $AK3_DIR/anykernel.sh
-sed -i '/device.name1=/c\device.name1=munch' $AK3_DIR/anykernel.sh
-sed -i '/device.name2=/c\device.name2=munchin' $AK3_DIR/anykernel.sh
-TARGET=munch
-# Set device name
-CODENAME=POCO-F4 
-# Set defconfig to use
-DEFCONFIG=vendor/munch_defconfig
-# Set front zipname
-KERNEL_NAME=MUNCH
+        sed -i '/is_apollo=/c\is_apollo=0;' $AK3_DIR/anykernel.sh
+        sed -i '/is_munch=/c\is_munch=1;' $AK3_DIR/anykernel.sh
+        sed -i '/is_alioth=/c\is_alioth=0;' $AK3_DIR/anykernel.sh
+        sed -i '/device.name1=/c\device.name1=munch' $AK3_DIR/anykernel.sh
+        sed -i '/device.name2=/c\device.name2=munchin' $AK3_DIR/anykernel.sh
+        TARGET=munch
+        # Set device name
+        CODENAME=POCO-F4 
+        # Set defconfig to use
+        DEFCONFIG=vendor/munch_defconfig
+        # Set front zipname
+        KERNEL_NAME=MUNCH
 }
 
 [[ "$@" == *alioth* ]] && {
-sed -i '/is_apollo=/c\is_apollo=0;' $AK3_DIR/anykernel.sh
-sed -i '/is_munch=/c\is_munch=0;' $AK3_DIR/anykernel.sh
-sed -i '/is_alioth=/c\is_alioth=1;' $AK3_DIR/anykernel.sh
-sed -i '/device.name1=/c\device.name1=alioth' $AK3_DIR/anykernel.sh
-sed -i '/device.name2=/c\device.name2=aliothin' $AK3_DIR/anykernel.sh
-TARGET=alioth
-# Set device name
-CODENAME=POCO-F3
-# Set defconfig to use
-DEFCONFIG=vendor/alioth_defconfig
-# Set front zipname
-KERNEL_NAME=ALIOTH
+        sed -i '/is_apollo=/c\is_apollo=0;' $AK3_DIR/anykernel.sh
+        sed -i '/is_munch=/c\is_munch=0;' $AK3_DIR/anykernel.sh
+        sed -i '/is_alioth=/c\is_alioth=1;' $AK3_DIR/anykernel.sh
+        sed -i '/device.name1=/c\device.name1=alioth' $AK3_DIR/anykernel.sh
+        sed -i '/device.name2=/c\device.name2=aliothin' $AK3_DIR/anykernel.sh
+        TARGET=alioth
+        # Set device name
+        CODENAME=POCO-F3
+        # Set defconfig to use
+        DEFCONFIG=vendor/alioth_defconfig
+        # Set front zipname
+        KERNEL_NAME=ALIOTH
 }
 
 [[ "$@" == *apollo* ]] && {
-sed -i '/is_apollo=/c\is_apollo=1;' $AK3_DIR/anykernel.sh
-sed -i '/is_munch=/c\is_munch=0;' $AK3_DIR/anykernel.sh
-sed -i '/is_alioth=/c\is_alioth=0;' $AK3_DIR/anykernel.sh
-sed -i '/device.name1=/c\device.name1=apollo' $AK3_DIR/anykernel.sh
-sed -i '/device.name2=/c\device.name2=apollon' $AK3_DIR/anykernel.sh
-TARGET=apollo
-# Set device name
-CODENAME=Mi10T/Pro
-# Set defconfig to use
-DEFCONFIG=vendor/apollo_defconfig
-# Set front zipname
-KERNEL_NAME=APOLLO
+        sed -i '/is_apollo=/c\is_apollo=1;' $AK3_DIR/anykernel.sh
+        sed -i '/is_munch=/c\is_munch=0;' $AK3_DIR/anykernel.sh
+        sed -i '/is_alioth=/c\is_alioth=0;' $AK3_DIR/anykernel.sh
+        sed -i '/device.name1=/c\device.name1=apollo' $AK3_DIR/anykernel.sh
+        sed -i '/device.name2=/c\device.name2=apollon' $AK3_DIR/anykernel.sh
+        TARGET=apollo
+        # Set device name
+        CODENAME=Mi10T/Pro
+        # Set defconfig to use
+        DEFCONFIG=vendor/apollo_defconfig
+        # Set front zipname
+        KERNEL_NAME=APOLLO
 }
 
 # Set kernel image to use
