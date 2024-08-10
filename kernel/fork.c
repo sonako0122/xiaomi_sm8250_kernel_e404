@@ -104,14 +104,10 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 
-#include <linux/devfreq_boost.h>
-
 #include <trace/events/sched.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
-
-extern int kp_active_mode(void);
 
 /*
  * Minimum number of threads to boot the kernel
@@ -898,7 +894,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	 * We must handle setting up seccomp filters once we're under
 	 * the sighand lock in case orig has changed between now and
 	 * then. Until then, filter must be NULL to avoid messing up
-	 * the usage counts on the error path calling free_task.
+	 * the usage counts on the error path calling free_task
 	 */
 	tsk->seccomp.filter = NULL;
 #endif
@@ -2390,18 +2386,6 @@ long _do_fork(unsigned long clone_flags,
 	struct task_struct *p;
 	int trace = 0;
 	long nr;
-
-	if (task_is_zygote(current)) {
-		switch (kp_active_mode()) {
-			case 2:
-				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 40);
-				break;
-			case 3:
-				devfreq_boost_kick_max(DEVFREQ_CPU_LLCC_DDR_BW, 60);
-				break;
-			default: break;
-		}
-	}
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When

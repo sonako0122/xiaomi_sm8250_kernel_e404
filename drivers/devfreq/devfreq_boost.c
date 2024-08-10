@@ -29,8 +29,6 @@ struct boost_dev {
 	unsigned long state;
 };
 
-extern int kp_active_mode(void);
-
 static unsigned short devfreq_boost_duration __read_mostly = 40;
 static unsigned short devfreq_wake_boost_duration __read_mostly = 0;
 
@@ -61,25 +59,10 @@ static struct df_boost_drv df_boost_drv_g __read_mostly = {
 
 static void __devfreq_boost_kick(struct boost_dev *b)
 {
-	unsigned long boost_jiffies;
+	unsigned long boost_jiffies = msecs_to_jiffies(devfreq_boost_duration);
 
 	if (!READ_ONCE(b->df) || test_bit(SCREEN_OFF, &b->state))
 		return;
-
-	switch (kp_active_mode()) {
-		case 1:
-			boost_jiffies = 0;
-			break;
-		case 2:
-			boost_jiffies = msecs_to_jiffies(50);
-			break;
-		case 3:
-			boost_jiffies = msecs_to_jiffies(60);
-                        break;
-		default:
-			boost_jiffies = msecs_to_jiffies(devfreq_boost_duration);
-                        break;
-	}
 
 	if (!boost_jiffies)
 		return;
