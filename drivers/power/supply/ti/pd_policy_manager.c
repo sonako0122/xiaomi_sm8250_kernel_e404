@@ -353,21 +353,6 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 /* get bq27z561 fastcharge mode to enable or disabled */
 static bool pd_get_bms_digest_verified(struct usbpd_pm *pdpm)
 {
-	union power_supply_propval pval = {0,};
-	int rc;
-
-	if (!pdpm->bms_psy)
-		return false;
-
-	rc = power_supply_get_property(pdpm->bms_psy,
-				POWER_SUPPLY_PROP_AUTHENTIC, &pval);
-	if (rc < 0) {
-		pr_info("Couldn't get fastcharge mode:%d\n", rc);
-		return false;
-	}
-
-	pr_err("pval.intval: %d\n", pval.intval);
-
 	/*
 	 * by default, xiaomi only uses flash charging with official chargers.
 	 * so return true, even if digest verification fails.
@@ -376,7 +361,6 @@ static bool pd_get_bms_digest_verified(struct usbpd_pm *pdpm)
 	 * tested on cmi
 	 */
 	return true;
-
 }
 
 /* get bq27z561 chip ok*/
