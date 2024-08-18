@@ -3,10 +3,6 @@
 # Makefile for the linux kernel.
 #
 
-KBUILD_CFLAGS	+= -mllvm -inline-threshold=5000
-KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=4000
-KBUILD_CFLAGS	+= -mllvm -unroll-threshold=1800
-
 obj-y     = fork.o exec_domain.o panic.o \
 	    cpu.o exit.o softirq.o resource.o \
 	    sysctl.o sysctl_binary.o capability.o ptrace.o user.o \
