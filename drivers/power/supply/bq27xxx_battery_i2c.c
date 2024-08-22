@@ -182,12 +182,12 @@ static int bq27xxx_battery_i2c_probe(struct i2c_client *client,
 		goto err_failed;
 
 	/* Schedule a polling after about 1 min */
-	queue_delayed_work(system_power_efficient_wq, &di->work, 60 * HZ);
+	schedule_delayed_work(&di->work, 60 * HZ);
 
 	i2c_set_clientdata(client, di);
 
 	if (client->irq) {
-		ret = request_threaded_irq(client->irq,
+		ret = devm_request_threaded_irq(&client->dev, client->irq,
 				NULL, bq27xxx_battery_irq_handler_thread,
 				IRQF_ONESHOT,
 				di->name, di);
@@ -216,9 +216,6 @@ err_failed:
 static int bq27xxx_battery_i2c_remove(struct i2c_client *client)
 {
 	struct bq27xxx_device_info *di = i2c_get_clientdata(client);
-
-	if (client->irq)
-		free_irq(client->irq, di);
 
 	bq27xxx_battery_teardown(di);
 

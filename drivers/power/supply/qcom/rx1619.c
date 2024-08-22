@@ -313,7 +313,7 @@ static int get_board_version(void)
 static int rx1619_read(struct rx1619_chg *chip, u8 *val, u16 addr)
 {
 	unsigned int temp;
-	int rc;
+	int rc = 0;
 
 	rc = regmap_read(chip->regmap, addr, &temp);
 	if (rc >= 0) {
@@ -402,7 +402,7 @@ static int rx1619_set_ept(struct rx1619_chg *chip)
 	u8 ept_raw = 0x0b;
 	u8 header[2] = {0};
 	u8 chksum[4] = {0};
-	int rc;
+	int rc = 0;
 
 	header[1] = 0x02;  //add the ept header
 
@@ -434,7 +434,7 @@ static int rx1619_set_rpp(struct rx1619_chg *chip)
 	u8 header[2] = {0};
 	u8 chksum[4] = {0};
 	union power_supply_propval val = {0, };
-	int rc;
+	int rc = 0;
 
 	header[1] = 0x31;  //add the rpp header
 
@@ -468,7 +468,7 @@ static int rx1619_set_cep(struct rx1619_chg *chip)
 	u8 header[2] = {0};
 	u8 chksum[4] = {0};
 	union power_supply_propval val = {0, };
-	int rc;
+	int rc = 0;
 
 	header[1] = 0x03;  //add the rpp header
 
@@ -585,7 +585,7 @@ void rx1619_oob_set_cep_work(struct work_struct *work)
 		chip->cep_val = rx1619_get_cep_value(chip);
 		rx1619_set_cep(chip);
 		dev_info(chip->dev, "[%s] cep_value = 0x%x\n", __func__, chip->cep_val);
-		queue_delayed_work(system_power_efficient_wq, &chip->oob_set_cep_work, msecs_to_jiffies(1000));
+		schedule_delayed_work(&chip->oob_set_cep_work, msecs_to_jiffies(1000));
 		mutex_unlock(&chip->wireless_chg_lock);
 	} else
 		dev_info(chip->dev, "[%s] oob disabled = %d\n", __func__, chip->is_oob_ok);
@@ -594,7 +594,7 @@ void rx1619_oob_set_cep_work(struct work_struct *work)
 
 int rx_op_ble_flag(int en)
 {
-	int rc;
+	int rc = 0;
 	if (!g_chip)
 		return -EINVAL;
 
@@ -800,7 +800,7 @@ int rx1619_set_vout(struct rx1619_chg *chip, int volt)
 	u8 value_h,value_l,ret;
 	u16 vout_set,vrect_set;
 
-	if ((volt < 4000) && (volt > 21000))
+	if ((volt < 4000) || (volt > 21000))
 	{
 		volt = 6000;  //6V
 	}
@@ -2111,13 +2111,13 @@ static void rx_set_charging_param(struct rx1619_chg *chip)
 		}
 
 		if (chip->is_pan_tx) {
-			queue_delayed_work(system_power_efficient_wq, &chip->pan_tx_work, msecs_to_jiffies(0));
+			schedule_delayed_work(&chip->pan_tx_work, msecs_to_jiffies(0));
 			goto out;
 		}
 
 		if (chip->is_voice_box_tx) {
 			dev_info(chip->dev, "enter voice work\n");
-			queue_delayed_work(system_power_efficient_wq, &chip->voice_tx_work, msecs_to_jiffies(0));
+			schedule_delayed_work(&chip->voice_tx_work, msecs_to_jiffies(0));
 			goto out;
 		}
 
@@ -2285,7 +2285,7 @@ static void rx1619_dc_check_work(struct work_struct *work)
 	} else {
 		chip->ss = 0;
 		dev_info(chip->dev, "dcin no present, continue dc check work\n");
-		queue_delayed_work(system_power_efficient_wq, &chip->dc_check_work, msecs_to_jiffies(2500));
+		schedule_delayed_work(&chip->dc_check_work, msecs_to_jiffies(2500));
 	}
 	if (chip->wireless_psy)
 		power_supply_changed(chip->wireless_psy);
@@ -2322,7 +2322,7 @@ static void rx_monitor_work(struct work_struct *work)
 
 	rx_set_charging_param(chip);
 
-	queue_delayed_work(system_power_efficient_wq, &chip->chg_monitor_work,
+	schedule_delayed_work(&chip->chg_monitor_work,
 			CHARGING_PERIOD_S * HZ);
 }
 
@@ -2863,7 +2863,7 @@ static void rx_chg_detect_work(struct work_struct *work)
 	union power_supply_propval val = {0, };
 	union power_supply_propval pc_val = {0, };
 	union power_supply_propval wk_val = {0, };
-	int rc;
+	int rc = 0;
 
 	dev_info(chip->dev, "[idt] enter %s\n", __func__);
 
@@ -2880,7 +2880,7 @@ static void rx_chg_detect_work(struct work_struct *work)
 		dev_info(chip->dev, "usb_online:%d, pc online:%d set chip disable\n",
 							val.intval, pc_val.intval);
 		rx_set_enable_mode(chip, 0);
-		queue_delayed_work(system_power_efficient_wq, &chip->fw_download_work, 1 * HZ);
+		schedule_delayed_work(&chip->fw_download_work, 1 * HZ);
 		return;
 	}
 
@@ -2899,7 +2899,7 @@ static void rx_chg_detect_work(struct work_struct *work)
 				rx_set_enable_mode(chip, true);
 			}
 
-			queue_delayed_work(system_power_efficient_wq, &chip->wireless_int_work,
+			schedule_delayed_work(&chip->wireless_int_work,
 						msecs_to_jiffies(30));
 		}
 	}
@@ -2928,12 +2928,12 @@ static void reverse_chg_state_set_work(struct work_struct *work)
 	struct rx1619_chg *chip =
 		 container_of(work, struct rx1619_chg,
 					reverse_chg_state_work.work);
-	int ret;
+	int ret = 0;
 
 	dev_info(chip->dev, "no rx found and disable reverse charging\n");
 	ret = rx_set_reverse_chg_mode(chip, false);
 	chip->is_reverse_chg = 1;
-	queue_delayed_work(system_power_efficient_wq, &chip->reverse_sent_state_work, 0);
+	schedule_delayed_work(&chip->reverse_sent_state_work, 0);
 
 	return;
 }
@@ -2943,12 +2943,12 @@ static void reverse_dping_state_set_work(struct work_struct *work)
 	struct rx1619_chg *chip =
 		 container_of(work, struct rx1619_chg,
 					reverse_dping_state_work.work);
-	int ret;
+	int ret = 0;
 
 	dev_info(chip->dev, "tx mode fault and disable reverse charging\n");
 	ret = rx_set_reverse_chg_mode(chip, false);
 	chip->is_reverse_chg = 2;
-	queue_delayed_work(system_power_efficient_wq, &chip->reverse_sent_state_work, 0);
+	schedule_delayed_work(&chip->reverse_sent_state_work, 0);
 	return;
 }
 
@@ -2971,7 +2971,7 @@ static void rx1619_wpc_det_work(struct work_struct *work)
 			dev_info(chip->dev, "power_good high, wireless attached\n");
 			chip->power_good_flag = 1;
 			val.intval = 1;
-			queue_delayed_work(system_power_efficient_wq, &chip->dc_check_work, msecs_to_jiffies(2500));
+			schedule_delayed_work(&chip->dc_check_work, msecs_to_jiffies(2500));
 		} else {
 			dev_info(chip->dev, "power_good low, wireless detached\n");
 			cancel_delayed_work(&chip->dc_check_work);
@@ -3051,7 +3051,7 @@ static void rx1619_wireless_int_work(struct work_struct *work)
 	u8 err_cmd;
 	static int retry;
 	static int retry_id;
-	int rc;
+	int rc = 0;
 	int cnt;
 	union power_supply_propval cp_val = {0, };
 	union power_supply_propval val = {0, };
@@ -3074,14 +3074,14 @@ static void rx1619_wireless_int_work(struct work_struct *work)
 			if (tx_status && tx_status != REVERSE_CHG_TX_SWITCH_DONE) {
 				ret = rx_set_reverse_chg_mode(chip, false);
 				chip->is_reverse_chg = 2;
-				queue_delayed_work(system_power_efficient_wq, &chip->reverse_sent_state_work, 0);
+				schedule_delayed_work(&chip->reverse_sent_state_work, 0);
 			} else if (tx_status == REVERSE_CHG_TX_SWITCH_DONE) {
 				dev_err(chip->dev, "[rx1619] restart because of OTG \n");
 			}
 			tx_phase = rx1619_get_tx_phase(chip);
 			switch (tx_phase) {
 			case PING:
-				//queue_delayed_work(system_power_efficient_wq, &chip->reverse_chg_state_work, 80 * HZ);
+				//schedule_delayed_work(&chip->reverse_chg_state_work, 80 * HZ);
 				alarm_start_relative(&chip->reverse_chg_alarm,
 					ms_to_ktime(REVERSE_CHG_CHECK_DELAY_MS));
 				//cancel_delayed_work(&chip->reverse_dping_state_work);
@@ -3100,7 +3100,7 @@ static void rx1619_wireless_int_work(struct work_struct *work)
 				pm_stay_awake(chip->dev);
 				/* set reverse charging state to started*/
 				chip->is_reverse_chg = 4;
-				queue_delayed_work(system_power_efficient_wq, &chip->reverse_sent_state_work, 0);
+				schedule_delayed_work(&chip->reverse_sent_state_work, 0);
 				dev_info(chip->dev, "tx mode power transfer\n");
 				break;
 			case POWER_LIM:
@@ -3150,9 +3150,9 @@ static void rx1619_wireless_int_work(struct work_struct *work)
 
 		if (chip->epp_tx_id_l == 0x59) {
 			dev_info(chip->dev, "mophie tx, start dc check after 8s\n");
-			queue_delayed_work(system_power_efficient_wq, &chip->dc_check_work, msecs_to_jiffies(8000));
+			schedule_delayed_work(&chip->dc_check_work, msecs_to_jiffies(8000));
 		} else
-			queue_delayed_work(system_power_efficient_wq, &chip->dc_check_work, msecs_to_jiffies(2500));
+			schedule_delayed_work(&chip->dc_check_work, msecs_to_jiffies(2500));
 
 		dev_info(chip->dev, "epp_tx_id_h = 0x%x, epp_tx_id_l = 0x%x\n",
 					chip->epp_tx_id_h, chip->epp_tx_id_l);
@@ -3343,7 +3343,7 @@ static void rx1619_wireless_int_work(struct work_struct *work)
 		}
 		if (fc_flag) {
 			set_usb_type_current(chip, g_USB_TYPE);
-			queue_delayed_work(system_power_efficient_wq, &chip->chg_monitor_work,
+			schedule_delayed_work(&chip->chg_monitor_work,
 						msecs_to_jiffies(1000));
 		} else {
 			if (chip->target_vol > 0) {
@@ -3371,7 +3371,7 @@ static void rx1619_wireless_int_work(struct work_struct *work)
 			set_usb_type_current(chip, g_USB_TYPE);
 			dev_info(chip->dev, "[%s] fast charge success!!! \n",
 								__func__);
-			queue_delayed_work(system_power_efficient_wq, &chip->chg_monitor_work,
+			schedule_delayed_work(&chip->chg_monitor_work,
 						msecs_to_jiffies(1000));
 		} else {
 			dev_info(chip->dev, "[%s] fast charge fail!!! \n",
@@ -3415,7 +3415,7 @@ static void rx1619_wireless_int_work(struct work_struct *work)
 						__func__, ble_flag);
 		if (ble_flag & BIT(2)) {
 			if (!chip->is_oob_ok) {//OOB OK
-				queue_delayed_work(system_power_efficient_wq, &chip->oob_set_cep_work, 0);
+				schedule_delayed_work(&chip->oob_set_cep_work, 0);
 				chip->is_oob_ok = 1;
 			}
 		} else {
@@ -3661,7 +3661,7 @@ static irqreturn_t rx1619_chg_stat_handler(int irq, void *dev_id)
 
 	dev_info(chip->dev, "[%s]\n", __func__);
 
-	queue_delayed_work(system_power_efficient_wq, &chip->wireless_int_work, 0);
+	schedule_delayed_work(&chip->wireless_int_work, 0);
 
 	return IRQ_HANDLED;
 }
@@ -3673,7 +3673,7 @@ static irqreturn_t rx1619_power_good_handler(int irq, void *dev_id)
 
 	if (chip->fw_update)
 		return IRQ_HANDLED;
-	queue_delayed_work(system_power_efficient_wq, &chip->wpc_det_work, msecs_to_jiffies(0));
+	schedule_delayed_work(&chip->wpc_det_work, msecs_to_jiffies(0));
 
 	return IRQ_HANDLED;
 }
@@ -3815,7 +3815,7 @@ static int rx1619_set_reverse_gpio_state( struct rx1619_chg *chip, int enable){
 }
 static int rx_set_reverse_gpio(struct rx1619_chg *chip, int enable)
 {
-	int ret;
+	int ret = 0;
 	union power_supply_propval val = {0, };
 
 	chip->wireless_psy = power_supply_get_by_name("wireless");
@@ -3862,7 +3862,7 @@ static int rx_set_reverse_gpio(struct rx1619_chg *chip, int enable)
 
 static int rx_get_reverse_chg_mode(struct rx1619_chg *chip)
 {
-	int ret;
+	int ret = 0;
 
 	if (gpio_is_valid(chip->tx_on_gpio))
 		ret = gpio_get_value(chip->tx_on_gpio);
@@ -3886,7 +3886,7 @@ static int rx_set_reverse_chg_mode(struct rx1619_chg *chip, int enable)
 	union power_supply_propval cp_val = {0, };
 	union power_supply_propval val = {0, };
 	union power_supply_propval wk_val = {0, };
-	int ret, rc;
+	int ret = 0, rc = 0;
 
 	chip->wireless_psy = power_supply_get_by_name("wireless");
 	if (!chip->wireless_psy) {
@@ -3944,7 +3944,7 @@ static int rx_set_reverse_chg_mode(struct rx1619_chg *chip, int enable)
 			rx1619_start_tx_function(chip);
 			alarm_start_relative(&chip->reverse_dping_alarm,
 					ms_to_ktime(REVERSE_DPING_CHECK_DELAY_MS));
-			//queue_delayed_work(system_power_efficient_wq, &chip->reverse_dping_state_work, 10 * HZ);
+			//schedule_delayed_work(&chip->reverse_dping_state_work, 10 * HZ);
 		} else {
 			dev_info(chip->dev, "disable reverse charging for wireless\n");
 			if (chip->wireless_psy) {
@@ -3982,7 +3982,7 @@ static enum alarmtimer_restart reverse_chg_alarm_cb(struct alarm *alarm,
 
 	/* Atomic context, cannot use voter */
 	pm_stay_awake(chip->dev);
-	queue_delayed_work(system_power_efficient_wq, &chip->reverse_chg_state_work, 0);
+	schedule_delayed_work(&chip->reverse_chg_state_work, 0);
 
 	return ALARMTIMER_NORESTART;
 }
@@ -3998,7 +3998,7 @@ static enum alarmtimer_restart cmd_timeout_alarm_cb(struct alarm *alarm,
 			ktime_to_ms(now));
 
 	/* Atomic context, cannot use voter */
-	queue_delayed_work(system_power_efficient_wq, &chip->cmd_timeout_work, 0);
+	schedule_delayed_work(&chip->cmd_timeout_work, 0);
 
 	return ALARMTIMER_NORESTART;
 }
@@ -4015,7 +4015,7 @@ static enum alarmtimer_restart reverse_dping_alarm_cb(struct alarm *alarm,
 
 	/* Atomic context, cannot use voter */
 	pm_stay_awake(chip->dev);
-	queue_delayed_work(system_power_efficient_wq, &chip->reverse_dping_state_work, 0);
+	schedule_delayed_work(&chip->reverse_dping_state_work, 0);
 
 	return ALARMTIMER_NORESTART;
 }
@@ -4029,7 +4029,7 @@ static void rx1619_set_present(struct rx1619_chg *chip, int enable)
 	if (enable) {
 		chip->dcin_present = 1;
 	} else {
-		queue_delayed_work(system_power_efficient_wq, &chip->oob_set_ept_work, msecs_to_jiffies(10));
+		schedule_delayed_work(&chip->oob_set_ept_work, msecs_to_jiffies(10));
 		chip->dcin_present = 0;
 		g_id_done_flag = 0;
 		g_epp_or_bpp = BPP_MODE;
@@ -4463,7 +4463,7 @@ static int rx1619_wireless_set_property(struct power_supply *psy,
 		enum power_supply_property prop,
 		const union power_supply_propval *val)
 {
-	int ret;
+	int ret = 0;
 	struct rx1619_chg *chip = power_supply_get_drvdata(psy);
 	int data;
 
@@ -4510,12 +4510,12 @@ static int rx1619_wireless_set_property(struct power_supply *psy,
 			break;
 		}
 		chip->is_reverse_chg = 0;
-		queue_delayed_work(system_power_efficient_wq, &chip->reverse_sent_state_work, 0);
+		schedule_delayed_work(&chip->reverse_sent_state_work, 0);
 		if (!chip->power_good_flag) {
 			ret = rx_set_reverse_chg_mode(chip, val->intval);
 		} else {
 			chip->is_reverse_chg = 3;
-			queue_delayed_work(system_power_efficient_wq, &chip->reverse_sent_state_work, 0);
+			schedule_delayed_work(&chip->reverse_sent_state_work, 0);
 		}
 		break;
 	case POWER_SUPPLY_PROP_OTG_STATE:
@@ -4618,7 +4618,7 @@ static const struct regmap_config rx1619_regmap_config = {
 static int rx1619_prop_is_writeable(struct power_supply *psy,
 		enum power_supply_property psp)
 {
-	int rc;
+	int rc = 0;
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_INPUT_VOLTAGE_REGULATION:
@@ -4819,10 +4819,10 @@ static int rx1619_probe(struct i2c_client *client,const struct i2c_device_id *id
 		usleep_range(20000, 25000);
 		rx_set_enable_mode(chip, true);
 	} else {
-		queue_delayed_work(system_power_efficient_wq, &chip->chg_detect_work, 3 * HZ);
+		schedule_delayed_work(&chip->chg_detect_work, 3 * HZ);
 	}
 	if (!g_rx1619_first_flag)
-		queue_delayed_work(system_power_efficient_wq, &chip->rx_first_boot, msecs_to_jiffies(45000));
+		schedule_delayed_work(&chip->rx_first_boot, msecs_to_jiffies(45000));
 	return 0;
 
 
@@ -4878,7 +4878,7 @@ static struct i2c_driver rx1619_driver = {
 
 static int __init rx1619_init(void)
 {
-	int ret;
+	int ret = 0;
 	uint32_t hw_version = 0;
 #ifdef CONFIG_RX1619_REMOVE
 	return 0;

@@ -33,12 +33,11 @@
 #define FG_MEM_IF_PM8150B		0x0D
 #define FG_ADC_RR_PM8150B		0x13
 
+#define SDAM_COOKIE_OFFSET		0x80
 #define SDAM_CYCLE_COUNT_OFFSET		0x81
 #define SDAM_CAP_LEARN_OFFSET		0x91
+#define SDAM_COOKIE			0xA5
 #define SDAM_FG_PARAM_LENGTH		20
-
-#define SDAM_COOKIE_OFFSET_4BYTE	0x95
-#define SDAM_COOKIE_4BYTE		0x12345678
 
 #define FG_SRAM_LEN			972
 #define PROFILE_LEN			416
@@ -741,7 +740,7 @@ static int fg_gen4_get_learned_capacity(void *data, int64_t *learned_cap_uah)
 {
 	struct fg_gen4_chip *chip = data;
 	struct fg_dev *fg;
-	int rc, act_cap_mah;
+	int rc = 0, act_cap_mah;
 	u8 buf[2];
 
 	if (!chip)
@@ -1392,7 +1391,7 @@ static int fg_gen4_store_learned_capacity(void *data, int64_t learned_cap_uah)
 	struct fg_dev *fg;
 	int16_t cc_mah;
 	int rc;
-	u32 cookie_4byte = SDAM_COOKIE_4BYTE;
+	u8 cookie = SDAM_COOKIE;
 
 	if (!chip)
 		return -ENODEV;
@@ -1419,8 +1418,8 @@ static int fg_gen4_store_learned_capacity(void *data, int64_t learned_cap_uah)
 			return rc;
 		}
 
-		rc = nvmem_device_write(chip->fg_nvmem,
-			SDAM_COOKIE_OFFSET_4BYTE, 1, &cookie_4byte);
+		rc = nvmem_device_write(chip->fg_nvmem, SDAM_COOKIE_OFFSET, 1,
+					&cookie);
 		if (rc < 0) {
 			pr_err("Error in writing cookie to SDAM, rc=%d\n", rc);
 			return rc;
@@ -2151,7 +2150,7 @@ static int fg_gen4_get_batt_profile(struct fg_dev *fg)
 			if (profile_node == ERR_PTR(-ENXIO)) {
 				pr_warn("verifty battery fail. recheck after, retry:%d\n",
 					retry_batt_profile);
-				queue_delayed_work(system_power_efficient_wq, &fg->profile_load_work, 500);
+				schedule_delayed_work(&fg->profile_load_work, 500);
 			}
 		} else if (!fg->profile_already_find) {
 			if (!chip->dt.sun_profile_only) {
@@ -2576,17 +2575,17 @@ static bool is_sdam_cookie_set(struct fg_gen4_chip *chip)
 {
 	struct fg_dev *fg = &chip->fg;
 	int rc;
-	u32 cookie_4byte;
+	u8 cookie;
 
-	rc = nvmem_device_read(chip->fg_nvmem, SDAM_COOKIE_OFFSET_4BYTE, 4,
-			&cookie_4byte);
+	rc = nvmem_device_read(chip->fg_nvmem, SDAM_COOKIE_OFFSET, 1,
+				&cookie);
 	if (rc < 0) {
 		pr_err("Error in reading SDAM_COOKIE rc=%d\n", rc);
 		return false;
 	}
 
-	fg_dbg(fg, FG_STATUS, "cookie_4byte: %08x\n", cookie_4byte);
-	return (cookie_4byte == SDAM_COOKIE_4BYTE);
+	fg_dbg(fg, FG_STATUS, "cookie: %x\n", cookie);
+	return (cookie == SDAM_COOKIE);
 }
 
 static void fg_gen4_clear_sdam(struct fg_gen4_chip *chip)
@@ -2610,9 +2609,8 @@ static void fg_gen4_clear_sdam(struct fg_gen4_chip *chip)
 static void fg_gen4_post_profile_load(struct fg_gen4_chip *chip)
 {
 	struct fg_dev *fg = &chip->fg;
-	int rc = 0, act_cap_mah;
+	int rc, act_cap_mah;
 	u8 buf[16] = {0};
-	u32 cookie_4byte = 0;
 
 	if (chip->dt.multi_profile_load &&
 		chip->batt_age_level != chip->last_batt_age_level) {
@@ -2666,13 +2664,6 @@ static void fg_gen4_post_profile_load(struct fg_gen4_chip *chip)
 				pr_err("Error in writing learned capacity to SDAM, rc=%d\n",
 					rc);
 		}
-
-		/* Set the COOKIE to prevent rechecking the SRAM again */
-		cookie_4byte = SDAM_COOKIE_4BYTE;
-		rc = nvmem_device_write(chip->fg_nvmem,
-			SDAM_COOKIE_OFFSET_4BYTE, 4, (u8 *)&cookie_4byte);
-		if (rc < 0)
-			pr_err("Failed to set SDAM cookie, rc=%d\n", rc);
 	}
 
 	/* Restore the cycle counters so that it would be valid at this point */
@@ -2806,7 +2797,7 @@ out:
 	schedule_delayed_work(&chip->pl_enable_work, msecs_to_jiffies(5000));
 	vote(fg->awake_votable, PROFILE_LOAD, false, 0);
 	if (!work_pending(&fg->status_change_work)) {
-		pm_wakeup_event(fg->dev, 0);
+		pm_stay_awake(fg->dev);
 		schedule_work(&fg->status_change_work);
 	}
 
@@ -4160,7 +4151,7 @@ static enum alarmtimer_restart fg_esr_fast_cal_timer(struct alarm *alarm,
 		 * We cannot vote for awake votable here as that takes
 		 * a mutex lock and this is executed in an atomic context.
 		 */
-		pm_wakeup_event(fg->dev, 0);
+		pm_stay_awake(fg->dev);
 		chip->esr_fast_cal_timer_expired = true;
 		schedule_work(&chip->esr_calib_work);
 	}
@@ -4493,7 +4484,7 @@ static void battery_authentic_work(struct work_struct *work)
 		retry_battery_authentic_result++;
 		if (retry_battery_authentic_result < BATTERY_AUTHENTIC_COUNT_MAX) {
 			pr_err("battery authentic work begin to restart.\n");
-			queue_delayed_work(system_power_efficient_wq, &chip->battery_authentic_work,
+			schedule_delayed_work(&chip->battery_authentic_work,
 				msecs_to_jiffies(battery_authentic_period_ms));
 		}
 
@@ -4502,11 +4493,11 @@ static void battery_authentic_work(struct work_struct *work)
 		}
 	} else {
 		pr_err("FG: authentic prop is %d\n", pval.intval);
-		queue_delayed_work(system_power_efficient_wq, &chip->ds_romid_work,
+		schedule_delayed_work(&chip->ds_romid_work,
 				msecs_to_jiffies(0));
-		queue_delayed_work(system_power_efficient_wq, &chip->ds_status_work,
+		schedule_delayed_work(&chip->ds_status_work,
 				msecs_to_jiffies(500));
-		queue_delayed_work(system_power_efficient_wq, &chip->ds_page0_work,
+		schedule_delayed_work(&chip->ds_page0_work,
 				msecs_to_jiffies(1000));
 	}
 }
@@ -4531,7 +4522,7 @@ static void ds_romid_work(struct work_struct *work)
 		retry_ds_romid++;
 		if (retry_ds_romid < DS_ROMID_COUNT_MAX) {
 			pr_err("battery authentic work begin to restart.\n");
-			queue_delayed_work(system_power_efficient_wq, &chip->ds_romid_work,
+			schedule_delayed_work(&chip->ds_romid_work,
 				msecs_to_jiffies(ds_romid_period_ms));
 		}
 
@@ -4567,7 +4558,7 @@ static void ds_status_work(struct work_struct *work)
 		retry_ds_status++;
 		if (retry_ds_status < DS_STATUS_COUNT_MAX) {
 			pr_err("battery authentic work begin to restart.\n");
-			queue_delayed_work(system_power_efficient_wq, &chip->ds_status_work,
+			schedule_delayed_work(&chip->ds_status_work,
 				msecs_to_jiffies(ds_status_period_ms));
 		}
 
@@ -4603,7 +4594,7 @@ static void ds_page0_work(struct work_struct *work)
 		retry_ds_page0++;
 		if (retry_ds_page0 < DS_PAGE0_COUNT_MAX) {
 			pr_err("battery authentic work begin to restart.\n");
-			queue_delayed_work(system_power_efficient_wq, &chip->ds_page0_work,
+			schedule_delayed_work(&chip->ds_page0_work,
 				msecs_to_jiffies(ds_page0_period_ms));
 		}
 
@@ -5629,7 +5620,7 @@ static int fg_notifier_cb(struct notifier_block *nb,
 		 * We cannot vote for awake votable here as that takes
 		 * a mutex lock and this is executed in an atomic context.
 		 */
-		pm_wakeup_event(fg->dev, 0);
+		pm_stay_awake(fg->dev);
 		schedule_work(&fg->status_change_work);
 	}
 
@@ -5642,7 +5633,7 @@ static int fg_awake_cb(struct votable *votable, void *data, int awake,
 	struct fg_dev *fg = data;
 
 	if (awake)
-		pm_wakeup_event(fg->dev, 0);
+		pm_stay_awake(fg->dev);
 	else
 		pm_relax(fg->dev);
 
@@ -7201,7 +7192,7 @@ static void empty_restart_fg_work(struct work_struct *work)
 			if (batt_psy_initialized(fg))
 				power_supply_changed(fg->batt_psy);
 			cancel_delayed_work_sync(&fg->soc_monitor_work);
-			queue_delayed_work(system_power_efficient_wq, &fg->soc_monitor_work,
+			schedule_delayed_work(&fg->soc_monitor_work,
 				msecs_to_jiffies(RESTART_FG_MONITOR_SOC_WAIT_PER_MS));
 		} else {
 			schedule_delayed_work(
@@ -7277,13 +7268,13 @@ static void soc_monitor_work(struct work_struct *work)
 
 	if (chip->dt.fg_increase_100soc_time) {
 		if (!fg->soc_reporting_ready)
-			queue_delayed_work(system_power_efficient_wq, &fg->soc_monitor_work,
+			schedule_delayed_work(&fg->soc_monitor_work,
 				msecs_to_jiffies(MONITOR_SOC_WAIT_READY));
 		else
-			queue_delayed_work(system_power_efficient_wq, &fg->soc_monitor_work,
+			schedule_delayed_work(&fg->soc_monitor_work,
 				msecs_to_jiffies(MONITOR_SOC_WAIT_PER_MS));
 	} else {
-		queue_delayed_work(system_power_efficient_wq, &fg->soc_monitor_work,
+		schedule_delayed_work(&fg->soc_monitor_work,
 			msecs_to_jiffies(MONITOR_SOC_WAIT_PER_MS));
 	}
 }
@@ -7413,9 +7404,9 @@ static int fg_gen4_probe(struct platform_device *pdev)
 	INIT_WORK(&fg->status_change_work, status_change_work);
 	INIT_WORK(&chip->esr_calib_work, esr_calib_work);
 	INIT_WORK(&chip->soc_scale_work, soc_scale_work);
-	INIT_DEFERRABLE_WORK(&fg->profile_load_work, profile_load_work);
-	INIT_DEFERRABLE_WORK(&fg->sram_dump_work, sram_dump_work);
-	INIT_DEFERRABLE_WORK(&chip->pl_enable_work, pl_enable_work);
+	INIT_DELAYED_WORK(&fg->profile_load_work, profile_load_work);
+	INIT_DELAYED_WORK(&fg->sram_dump_work, sram_dump_work);
+	INIT_DELAYED_WORK(&chip->pl_enable_work, pl_enable_work);
 	INIT_WORK(&chip->pl_current_en_work, pl_current_en_work);
 	INIT_DELAYED_WORK(&fg->soc_monitor_work, soc_monitor_work);
 	INIT_DELAYED_WORK(&fg->empty_restart_fg_work, empty_restart_fg_work);
@@ -7540,7 +7531,7 @@ static int fg_gen4_probe(struct platform_device *pdev)
 	}
 #ifdef CONFIG_BATT_VERIFY_BY_DS28E16
 	if (chip->battery_authentic_result != true) {
-		queue_delayed_work(system_power_efficient_wq, &chip->battery_authentic_work,
+		schedule_delayed_work(&chip->battery_authentic_work,
 				msecs_to_jiffies(0));
 	}
 #endif
@@ -7715,7 +7706,7 @@ static int fg_gen4_resume(struct device *dev)
 		schedule_delayed_work(&fg->sram_dump_work,
 				msecs_to_jiffies(fg_sram_dump_period_ms));
 
-	queue_delayed_work(system_power_efficient_wq, &fg->soc_monitor_work,
+	schedule_delayed_work(&fg->soc_monitor_work,
 				msecs_to_jiffies(MONITOR_SOC_WAIT_MS));
 	return 0;
 }

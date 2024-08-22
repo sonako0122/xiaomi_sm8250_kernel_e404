@@ -29,7 +29,7 @@
 #define SBS_CHARGER_REG_STATUS			0x13
 #define SBS_CHARGER_REG_ALARM_WARNING		0x16
 
-#define SBS_CHARGER_STATUS_CHARGE_INHIBITED	BIT(0)
+#define SBS_CHARGER_STATUS_CHARGE_INHIBITED	BIT(1)
 #define SBS_CHARGER_STATUS_RES_COLD		BIT(9)
 #define SBS_CHARGER_STATUS_RES_HOT		BIT(10)
 #define SBS_CHARGER_STATUS_BATTERY_PRESENT	BIT(14)
@@ -114,7 +114,7 @@ static void sbs_delayed_work(struct work_struct *work)
 
 	sbs_check_state(chip);
 
-	queue_delayed_work(system_power_efficient_wq, &chip->work,
+	schedule_delayed_work(&chip->work,
 			      msecs_to_jiffies(SBS_CHARGER_POLL_TIME));
 }
 
@@ -222,7 +222,7 @@ static int sbs_probe(struct i2c_client *client,
 		}
 	} else {
 		INIT_DELAYED_WORK(&chip->work, sbs_delayed_work);
-		queue_delayed_work(system_power_efficient_wq, &chip->work,
+		schedule_delayed_work(&chip->work,
 				      msecs_to_jiffies(SBS_CHARGER_POLL_TIME));
 	}
 
