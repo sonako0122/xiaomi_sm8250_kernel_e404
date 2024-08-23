@@ -361,11 +361,9 @@ unsigned long apply_dvfs_headroom(int cpu, unsigned long util, unsigned long max
 		return util;
 
 	if (cpumask_test_cpu(cpu, cpu_lp_mask)) {
-			headroom = util + (util >> 0); // 2x
-	} else if (cpumask_test_cpu(cpu, cpu_perf_mask)) {
-		headroom = util + (util >> 1) + (util >> 2); // 1.75x
+		headroom = util + (util >> 1);
 	} else {
-		headroom = util + (util >> 2); // 1.25x
+		headroom = util + (util >> 2);
 	}
 
 	return headroom;
