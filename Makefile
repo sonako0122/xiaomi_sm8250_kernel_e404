@@ -690,18 +690,18 @@ KBUILD_CFLAGS   += -Os
 KBUILD_AFLAGS   += -Os
 KBUILD_LDFLAGS  += -Os
 else ifeq ($(cc-name),clang)
-#Enable hot cold split optimization
+# Enable hot cold split optimization
 KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
-#Enable optimization for cortex a55
+# Enable optimization for cortex a55
 KBUILD_CFLAGS	+= -mcpu=cortex-a77 -mtune=cortex-a77
 KBUILD_AFLAGS   += -mcpu=cortex-a77 -mtune=cortex-a77
-#Enable MLGO
-KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
-KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
-KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
-#Math related flags
-#KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
-#Other flags
+# MLGO
+# KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
+# KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
+# KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
+# Math related flags
+# KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
+# Other flags
 KBUILD_CFLAGS   += -fcf-protection=none
 #-O3 optimization
 KBUILD_CFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod --cuda-path=/dev/null
