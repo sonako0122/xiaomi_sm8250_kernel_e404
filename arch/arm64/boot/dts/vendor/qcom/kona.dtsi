@@ -290,20 +290,24 @@
 				core3 {
 					cpu = <&CPU3>;
 				};
+			};
 
-				core4 {
+			cluster1 {
+				core0 {
 					cpu = <&CPU4>;
 				};
 
-				core5 {
+				core1 {
 					cpu = <&CPU5>;
 				};
 
-				core6 {
+				core2 {
 					cpu = <&CPU6>;
 				};
+			};
 
-				core7 {
+			cluster2 {
+				core0 {
 					cpu = <&CPU7>;
 				};
 			};
@@ -696,6 +700,7 @@
 				 <0 1 IRQ_TYPE_LEVEL_HIGH>;
 		qcom,bark-time = <11000>;
 		qcom,pet-time = <9360>;
+		qcom,wakeup-enable;
 		qcom,ipi-ping;
 	};
 
