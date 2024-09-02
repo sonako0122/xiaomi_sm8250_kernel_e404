@@ -54,7 +54,7 @@ static void devfreq_max_unboost(struct work_struct *work);
 
 static struct df_boost_drv df_boost_drv_g __read_mostly = {
 	BOOST_DEV_INIT(df_boost_drv_g, DEVFREQ_CPU_LLCC_DDR_BW,
-		       3879)
+		       2597)
 };
 
 static void __devfreq_boost_kick(struct boost_dev *b)
