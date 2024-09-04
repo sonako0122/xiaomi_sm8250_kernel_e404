@@ -372,10 +372,10 @@ else
 HOSTCC	= gcc
 HOSTCXX	= g++
 endif
-KBUILD_HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 \
+KBUILD_HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 \
 		-fomit-frame-pointer -std=gnu89 $(HOST_LFS_CFLAGS) \
 		$(HOSTCFLAGS)
-KBUILD_HOSTCXXFLAGS := -O3 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS)
+KBUILD_HOSTCXXFLAGS := -O2 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS)
 KBUILD_HOSTLDFLAGS  := $(HOST_LFS_LDFLAGS) $(HOSTLDFLAGS)
 KBUILD_HOSTLDLIBS   := $(HOST_LFS_LIBS) $(HOSTLDLIBS)
 
@@ -703,10 +703,10 @@ KBUILD_AFLAGS   += -mcpu=cortex-a77 -mtune=cortex-a77
 # KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
 # Other flags
 KBUILD_CFLAGS   += -fcf-protection=none
-#-O3 optimization
-KBUILD_CFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod --cuda-path=/dev/null
-KBUILD_AFLAGS   += -O3 -march=armv8.2-a+lse+crypto+dotprod
-KBUILD_LDFLAGS  += -O3 --plugin-opt=O3
+#-O2 optimization
+KBUILD_CFLAGS   += -O2 -march=armv8.2-a+lse+crypto+dotprod --cuda-path=/dev/null
+KBUILD_AFLAGS   += -O2 -march=armv8.2-a+lse+crypto+dotprod
+KBUILD_LDFLAGS  += -O2 --plugin-opt=O2
 else
 KBUILD_CFLAGS   += -O2
 KBUILD_AFLAGS   += -O2
@@ -822,9 +822,9 @@ endif
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 
 ifdef CONFIG_LTO_CLANG
-KBUILD_LDFLAGS += -O3 --lto-O3 --strip-debug
+KBUILD_LDFLAGS += -O2 --lto-O2 --strip-debug
 else
-KBUILD_LDFLAGS += -O3 --strip-debug
+KBUILD_LDFLAGS += -O2 --strip-debug
 endif
 
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
