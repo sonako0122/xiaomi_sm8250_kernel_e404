@@ -1061,11 +1061,12 @@ static int pd_eval_src_caps(struct usbpd *pd)
 	/* Select the first PDO (vSafe5V) immediately. */
 	/* Select thr first PDO for zimi adapter*/
 	//if (pd->batt_2s && pd->adapter_id == 0xA819)
-		//pd_select_pdo(pd, 2, 0, 0);
-//	else if (pd->request_reject == 1)
+	//	pd_select_pdo(pd, 2, 0, 0);
+	//else if (pd->request_reject == 1)
 	//	;
 	//else
-		pd_select_pdo(pd, 1, 0, 0);
+	
+	pd_select_pdo(pd, 1, 0, 0);
 
 	return 0;
 }
