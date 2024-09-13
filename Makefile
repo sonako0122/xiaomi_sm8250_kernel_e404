@@ -696,9 +696,9 @@ KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
 KBUILD_CFLAGS	+= -mcpu=cortex-a77 -mtune=cortex-a77
 KBUILD_AFLAGS   += -mcpu=cortex-a77 -mtune=cortex-a77
 # MLGO
-# KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
-# KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
-# KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
+KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
+KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
+KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
 # Math related flags
 # KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
 # Other flags
