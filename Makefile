@@ -690,27 +690,28 @@ KBUILD_CFLAGS   += -Os
 KBUILD_AFLAGS   += -Os
 KBUILD_LDFLAGS  += -Os
 else ifeq ($(cc-name),clang)
-# Enable hot cold split optimization
 KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
-# Enable optimization for cortex a55
-KBUILD_CFLAGS	+= -mcpu=cortex-a77 -mtune=cortex-a77
-KBUILD_AFLAGS   += -mcpu=cortex-a77 -mtune=cortex-a77
-# MLGO
+KBUILD_CFLAGS   += -fcf-protection=none -fno-stack-protector
 KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
 KBUILD_LDFLAGS  += -mllvm -regalloc-enable-advisor=release
 KBUILD_LDFLAGS  += -mllvm -enable-ml-inliner=release
-# Math related flags
-# KBUILD_CFLAGS   += -ffast-math -fno-trapping-math -fno-math-errno
-# Other flags
-KBUILD_CFLAGS   += -fcf-protection=none
-#-O2 optimization
 KBUILD_CFLAGS   += -O2 -march=armv8.2-a+lse+crypto+dotprod --cuda-path=/dev/null
 KBUILD_AFLAGS   += -O2 -march=armv8.2-a+lse+crypto+dotprod
 KBUILD_LDFLAGS  += -O2 --plugin-opt=O2
+KBUILD_CFLAGS   += -mcpu=cortex-a77
+KBUILD_AFLAGS   += -mcpu=cortex-a77
+ifeq ($(CONFIG_LD_IS_LLD), y)
+KBUILD_LDFLAGS  += -mllvm -mcpu=cortex-a77
+endif
 else
-KBUILD_CFLAGS   += -O2
-KBUILD_AFLAGS   += -O2
-KBUILD_LDFLAGS  += -O2
+KBUILD_CFLAGS   += -O2 -march=armv8.2-a+lse+crypto+dotprod
+KBUILD_AFLAGS   += -O2 -march=armv8.2-a+lse+crypto+dotprod
+KBUILD_LDFLAGS  += -O2 --plugin-opt=O2
+
+KBUILD_CFLAGS   += -mcpu=cortex-a76.cortex-a55
+KBUILD_AFLAGS   += -mcpu=cortex-a76.cortex-a55
+
+KBUILD_CFLAGS   += -fcf-protection=none -fno-stack-protector
 
 ifdef CONFIG_INLINE_OPTIMIZATION
 ifdef CONFIG_CC_IS_CLANG
