@@ -4,29 +4,22 @@
 KERNEL_DIR="$PWD"
 cd ..
 BASE_DIR="$PWD"
-cd "$KERNEL_DIR"
-AK3_DIR="$BASE_DIR/AnyKernel3"
+cd $KERNEL_DIR
+
+AK3_DIR=$BASE_DIR/AnyKernel3
 [[ ! -d "$AK3_DIR" ]] && echo -e "(X) Please Provide AnyKernel3 !" && exit
 
 [[ "$@" == *stable* ]] && TYPE=STABLE || TYPE=CI
-[[ "$@" == *flto* ]] && LTO=FULL || LTO=THIN
-[[ "$@" == *dtbo* ]] && DTBO=1
-[[ "$@" == *neutron* ]] && export PATH="$BASE_DIR/neutron-clang/bin:$PATH" && CLANG="Neutron Clang" || export PATH="$BASE_DIR/aosp-clang/bin:$PATH" && CLANG="AOSP Clang"
 
-[[ "$@" == *underclock* ]] && {
-        # little
-        sed -i '/<1708800>,/c\<1708800>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        sed -i '/<1804800>;/c\//<1804800>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        # big
-        sed -i '/<2342400>,/c\<2342400>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        sed -i '/<2419200>;/c\//<2419200>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        # prime
-        sed -i '/<2553600>,/c\<2553600>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        sed -i '/<2649600>,/c\//<2649600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        sed -i '/<2745600>,/c\//<2745600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        sed -i '/<2841600>,/c\//<2841600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-        sed -i '/<3187200>;/c\//<3187200>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
-}
+[[ "$@" == *flto* ]] && LTO=FULL || LTO=THIN
+
+if [[ "$@" == *neutron* ]]; then
+        export PATH="$BASE_DIR/neutron-clang/bin:$PATH" && TC="Neutron Clang"
+elif [[ "$@" == *gcc* ]]; then
+        TC="Eva GCC"
+else
+        export PATH="$BASE_DIR/aosp-clang/bin:$PATH" && TC="AOSP Clang"
+fi
 
 [[ "$@" == *munch* ]] && {
         sed -i '/is_apollo=/c\is_apollo=0;' $AK3_DIR/anykernel.sh
@@ -74,23 +67,23 @@ AK3_DIR="$BASE_DIR/AnyKernel3"
 }
 
 # Set kernel image to use
-K_IMG="$KERNEL_DIR/out/arch/arm64/boot/Image"
-K_DTBO="$KERNEL_DIR/out/arch/arm64/boot/dtbo.img"
-K_DTB="$KERNEL_DIR/out/arch/arm64/boot/dtb"
+K_IMG=$KERNEL_DIR/out/arch/arm64/boot/Image
+K_DTBO=$KERNEL_DIR/out/arch/arm64/boot/dtbo.img
+K_DTB=$KERNEL_DIR/out/arch/arm64/boot/dtb
 
 # Set your Telegram chat id & bot token / export it from .bashrc
 TOKEN=
 CHATID=
 
 # Set anything you want
-export ARCH="arm64"
-export SUBARCH="arm64"
+export ARCH=arm64
+export SUBARCH=arm64
 export KBUILD_BUILD_USER=Project113
 export KBUILD_BUILD_HOST=Minsae
 export TZ=Asia/Jakarta
 
 setkernelname(){
-        [[ "$1" == "stable" ]] && sed -i '/CONFIG_LOCALVERSION=/c\CONFIG_LOCALVERSION="-NOVA-[ST]"' out/.config || sed -i '/CONFIG_LOCALVERSION=/c\CONFIG_LOCALVERSION="-NOVA-[CI]"' out/.config
+        [[ "$1" == "stable" ]] && sed -i '/CONFIG_LOCALVERSION=/c\CONFIG_LOCALVERSION="-E404-[R9]"' out/.config || sed -i '/CONFIG_LOCALVERSION=/c\CONFIG_LOCALVERSION="-E404-[CI]"' out/.config
 }
 
 build_msg(){
@@ -103,7 +96,7 @@ send_msg "
 <b>Device : </b><code>$CODENAME</code>
 <b>Branch : </b><code>$(git rev-parse --abbrev-ref HEAD)</code>
 <b>Commit : </b><code>$(git log --pretty=format:'%s' -1)</code>
-<b>Clang  : </b><code>$CLANG</code>
+<b>TC     : </b><code>$TC</code>
 <b>==================================</b>"
 }
 
@@ -114,7 +107,7 @@ send_msg "
 <b>Build Date : </b>
 <code>$(date +"%A, %d %b %Y, %H:%M:%S")</code>
 <b>Build Took : </b>
-<code>$(("$TOTAL_TIME" / 60)) Minutes, $(("$TOTAL_TIME" % 60)) Second</code>
+<code>$(($TOTAL_TIME / 60)) Minutes, $(($TOTAL_TIME % 60)) Second</code>
 <b>==================================</b>"
 }
 
@@ -137,6 +130,11 @@ send_file(){
                 -F "disable_web_page_preview=true"
 }
 
+kernelsu(){
+        [[ "$1" == "1" ]] && sed -i '/CONFIG_KSU=/c\CONFIG_KSU=y' out/.config
+        [[ "$1" == "0" ]] && sed -i '/CONFIG_KSU=/c\CONFIG_KSU=n' out/.config
+}
+
 miui_dtbo(){
         [[ "$1" == "APPLY" ]] && {
                 sed -i 's/qcom,mdss-pan-physical-width-dimension = <70>;$/qcom,mdss-pan-physical-width-dimension = <695>;/' arch/arm64/boot/dts/vendor/qcom/dsi-panel-l11r-38-08-0a-dsc-cmd.dtsi
@@ -149,59 +147,55 @@ miui_dtbo(){
                 sed -i 's/qcom,mdss-pan-physical-height-dimension = <155>;$/qcom,mdss-pan-physical-height-dimension = <1540>;/'  arch/arm64/boot/dts/vendor/qcom/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsi
         }
 
-        [[ "$1" == "REVERT" ]] && {
-                sed -i 's/qcom,mdss-pan-physical-width-dimension = <695>;$/qcom,mdss-pan-physical-width-dimension = <70>;/' arch/arm64/boot/dts/vendor/qcom/dsi-panel-l11r-38-08-0a-dsc-cmd.dtsi
-                sed -i 's/qcom,mdss-pan-physical-height-dimension = <1546>;$/qcom,mdss-pan-physical-height-dimension = <155>;/' arch/arm64/boot/dts/vendor/qcom/dsi-panel-l11r-38-08-0a-dsc-cmd.dtsi
+        [[ "$1" == "REVERT" ]] && git restore arch/arm64/boot/dts/vendor/qcom/dsi-panel-*
+}
 
-                sed -i 's/qcom,mdss-pan-physical-width-dimension = <700>;$/qcom,mdss-pan-physical-width-dimension = <70>;/' arch/arm64/boot/dts/vendor/qcom/dsi-panel-j3s-37-02-0a-dsc-video.dtsi
-                sed -i 's/qcom,mdss-pan-physical-height-dimension = <1540>;$/qcom,mdss-pan-physical-height-dimension = <154>;/' arch/arm64/boot/dts/vendor/qcom/dsi-panel-j3s-37-02-0a-dsc-video.dtsi
-
-                sed -i 's/qcom,mdss-pan-physical-width-dimension = <700>;$/qcom,mdss-pan-physical-width-dimension = <70>;/'  arch/arm64/boot/dts/vendor/qcom/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsi
-                sed -i 's/qcom,mdss-pan-physical-height-dimension = <1540>;$/qcom,mdss-pan-physical-height-dimension = <155>;/'  arch/arm64/boot/dts/vendor/qcom/dsi-panel-k11a-38-08-0a-dsc-cmd.dtsi
+effcpu() {
+        [[ "$1" == "APPLY" ]] && {
+                # little
+                # sed -i '/<1708800>,/c\<1708800>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                # sed -i '/<1804800>;/c\//<1804800>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                # big
+                # sed -i '/<2342400>,/c\<2342400>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                # sed -i '/<2419200>;/c\//<2419200>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                # prime
+                sed -i '/<2553600>,/c\<2553600>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                sed -i '/<2649600>,/c\//<2649600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                sed -i '/<2745600>,/c\//<2745600>,' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                sed -i '/<2841600>;/c\//<2841600>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
+                #sed -i '/<3187200>;/c\//<3187200>;' arch/arm64/boot/dts/vendor/qcom/kona.dtsi
         }
+
+        [[ "$1" == "REVERT" ]] && git restore arch/arm64/boot/dts/vendor/qcom/kona.dtsi
 }
 
 clearbuild(){
-        rm -rf "$K_IMG"
-        rm -rf "$K_DTB"
-        rm -rf "$K_DTBO"
-        rm -rf "out/arch/arm64/boot/dts/vendor/qcom"
-
-        rm -rf "$AK3_DIR/Image"
-        rm -rf "$AK3_DIR/Image.gz"
-        rm -rf "$AK3_DIR/dtb"
-        rm -rf "$AK3_DIR/dtbo.img"
+        rm -rf $K_IMG
+        rm -rf $K_DTB
+        rm -rf $K_DTBO
+        rm -rf out/arch/arm64/boot/dts/vendor/qcom
 }
 
 zipbuild(){
-        cp "$K_IMG" "$AK3_DIR"
-        cp "$K_DTB" "$AK3_DIR"
+        echo -e "(OK) Zipping Kernel !"
 
         cd "$AK3_DIR"
 
-        [[ "$@" == *AOSP* ]] && cp -af "$TARGET"-aospdtbo.img dtbo.img
-        [[ "$@" == *MIUI* ]] && cp -af "$TARGET"-miuidtbo.img dtbo.img
+        ZIP_NAME="[E404-"$KERNEL_NAME"]["$(date "+%Y%m%d-%H%M%S")"]".zip
+        zip -r9 "$BASE_DIR/$ZIP_NAME" */ $TARGET* anykernel.sh -x .git README.md LICENSE
 
-        echo -e "(OK) Zipping "$1" Kernel !"
-
-        [[ "$@" == *AOSP_NOKSU* ]] && AOSP_NOKSU_ZIP_NAME="["$KERNEL_NAME"-AOSP-NOKSU]["$(date "+%Y%m%d-%H%M%S")"]".zip && zip -r9 "$BASE_DIR/$AOSP_NOKSU_ZIP_NAME" * -x .git README.md *aospdtbo.img *miuidtbo.img
-        [[ "$@" == *AOSP_KSU* ]] && AOSP_KSU_ZIP_NAME="["$KERNEL_NAME"-AOSP-KSU]["$(date "+%Y%m%d-%H%M%S")"]".zip && zip -r9 "$BASE_DIR/$AOSP_KSU_ZIP_NAME" * -x .git README.md *aospdtbo.img *miuidtbo.img
-        [[ "$@" == *MIUI_NOKSU* ]] && MIUI_NOKSU_ZIP_NAME="["$KERNEL_NAME"-MIUI-NOKSU]["$(date "+%Y%m%d-%H%M%S")"]".zip && zip -r9 "$BASE_DIR/$MIUI_NOKSU_ZIP_NAME" * -x .git README.md *aospdtbo.img *miuidtbo.img
-        [[ "$@" == *MIUI_KSU* ]] && MIUI_KSU_ZIP_NAME="["$KERNEL_NAME"-MIUI-KSU]["$(date "+%Y%m%d-%H%M%S")"]".zip && zip -r9 "$BASE_DIR/$MIUI_KSU_ZIP_NAME" * -x .git README.md *aospdtbo.img *miuidtbo.img
-
-        cd "$KERNEL_DIR"
+        cd $KERNEL_DIR
 }
 
 uploadbuild(){
-        send_file "$BASE_DIR/$AOSP_NOKSU_ZIP_NAME" 
-        send_file "$BASE_DIR/$AOSP_KSU_ZIP_NAME" 
-        send_file "$BASE_DIR/$MIUI_NOKSU_ZIP_NAME" 
-        send_file "$BASE_DIR/$MIUI_KSU_ZIP_NAME" 
+        send_file "$BASE_DIR/$ZIP_NAME" 
         send_msg "<b>Kernel Flashable Zip Uploaded</b>"
 }
 
 compilebuild(){
-        make -j"$(nproc --all)" O=out \
+        [[ $TC == *Clang* ]] && {
+        
+        make -kj"$(nproc --all)" O=out \
                 CC=clang \
                 CROSS_COMPILE=aarch64-linux-gnu- \
                 CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
@@ -212,37 +206,49 @@ compilebuild(){
                 STRIP=llvm-strip \
                 LLVM=1 LLVM_IAS=1 \
                 2>&1 | tee -a out/log.txt
+        } || {
+        make -kj$(nproc --all) O=out \
+	       	CROSS_COMPILE=$BASE_DIR/gcc64/bin/aarch64-elf- 2>&1 | tee -a out/log.txt
+        }
 
-         [[ ! -e "$K_IMG" ]] && { 
+         [[ ! -e $K_IMG ]] && { 
                 echo -e "(X) Kernel Build Error !"
                 send_file "out/log.txt"
+                git restore arch/arm64/boot/dts/vendor/qcom arch/arm64/configs/$DEFCONFIG
                 send_msg "<b>! Kernel Build Error !</b>"
                 exit
         }
 }
 
 makebuild(){
-        [[ "$@" == *COMPILE* ]] && {
+        [[ "$TYPE" == "STABLE" ]] && setkernelname "stable" || setkernelname
 
-                [[ "$TYPE" == "STABLE" ]] && setkernelname "stable" || setkernelname
-
-                [[ "$1" == *KSU* ]] && sed -i '/CONFIG_KSU/c\CONFIG_KSU=y' out/.config
-                [[ "$1" == *NOKSU* ]] && sed -i '/CONFIG_KSU/c\CONFIG_KSU=n' out/.config
-
+        if [[ "$@" == "MAIN" ]]; then
+                kernelsu "1"
                 compilebuild
+        else
+                kernelsu "0"
+                effcpu "APPLY"
+                miui_dtbo "APPLY"
+                compilebuild
+                effcpu "REVERT"
+                miui_dtbo "REVERT"
+        fi
 
-                [[ "$DTBO" == 1 ]] && {
-                        [[ "$1" == *MIUI* ]] && rm -rf "$AK3_DIR/"$TARGET"-miuidtbo.img" && cp "$K_DTBO" "$AK3_DIR/"$TARGET"-miuidtbo.img"
-                        [[ "$1" == *AOSP* ]] && rm -rf "$AK3_DIR/"$TARGET"-aospdtbo.img" && cp "$K_DTBO" "$AK3_DIR/"$TARGET"-aospdtbo.img"
-                }
-        }
-
-        zipbuild "$1" "$2"
+        if [[ "$@" == "MAIN" ]]; then
+                cp $K_IMG $AK3_DIR/"$TARGET"-ksu-Image
+                cp $K_DTBO $AK3_DIR/"$TARGET"-normal-dtbo.img
+                cp $K_DTB $AK3_DIR/"$TARGET"-normal-dtb
+        else
+                cp $K_IMG $AK3_DIR/"$TARGET"-noksu-Image
+                cp $K_DTBO $AK3_DIR/"$TARGET"-miui-dtbo.img
+                cp $K_DTB $AK3_DIR/"$TARGET"-effcpu-dtb
+        fi
 }
 
 while true; do
         echo -e ""
-        echo -e " Menu                                                               "
+        echo -e " Menu "
         echo -e " ╔════════════════════════════════════╗"
         echo -e " ║ 1. Export Defconfig                ║"
         echo -e " ║ 2. Start Build                     ║"
@@ -254,33 +260,33 @@ while true; do
         read -r menu
         case "$menu" in 
         1 )
-                make O=out "$DEFCONFIG"
+                make O=out $DEFCONFIG
                 echo -e "(OK) Exported $DEFCONFIG to Out Dir !"
         ;;
 
         2 )
+                START="$(date +"%s")"
+
                 [[ $LTO == "FULL" ]] && sed -i '/CONFIG_LTO_CLANG_THIN/c\CONFIG_LTO_CLANG_THIN=n' out/.config && sed -i '/CONFIG_LTO_CLANG_FULL/c\CONFIG_LTO_CLANG_FULL=y' out/.config
                 [[ $LTO == "THIN" ]] && sed -i '/CONFIG_LTO_CLANG_THIN/c\CONFIG_LTO_CLANG_THIN=y' out/.config && sed -i '/CONFIG_LTO_CLANG_FULL/c\CONFIG_LTO_CLANG_FULL=n' out/.config
-
-                START="$(date +"%s")"
+                
+                #sed -i '/CONFIG_FCF_PROTECTION_NONE/c\CONFIG_FCF_PROTECTION_NONE=y' out/.config
+                #sed -i '/CONFIG_ARM64_PAN/c\CONFIG_ARM64_PAN=n' out/.config
+                #sed -i '/CONFIG_STACKPROTECTOR/c\CONFIG_STACKPROTECTOR=n' out/.config
+                #sed -i '/CONFIG_STACKPROTECTOR_STRONG/c\CONFIG_STACKPROTECTOR_STRONG=n' out/.config
 
                 build_msg
 
-                [[ "$DTBO" == 1 ]] && {
-                        send_msg "<b>AOSP DTBO Updated</b>"
-                        send_msg "<b>MIUI DTBO Updated</b>"
-                }
+                clearbuild
+
+                makebuild "MAIN"
 
                 clearbuild
-                makebuild "AOSP_KSU" "RECOMPILE"
-                miui_dtbo "APPLY"
-                [[ "$DTBO" == 1 ]] && makebuild "MIUI_KSU" "RECOMPILE" || makebuild "MIUI_KSU"
-                miui_dtbo "REVERT"
-                clearbuild
-                makebuild "AOSP_NOKSU" "RECOMPILE"
-                miui_dtbo "APPLY"
-                [[ "$DTBO" == 1 ]] && makebuild "MIUI_NOKSU" "RECOMPILE" || makebuild "MIUI_NOKSU"
-                miui_dtbo "REVERT"
+
+                makebuild # dirty build only to take miui dtbo, effcpu dtb, and noksu kernel image
+
+                zipbuild
+
                 clearbuild
 
                 TOTAL_TIME=$(("$(date +"%s")" - "$START"))
@@ -293,7 +299,7 @@ while true; do
 
                 [[ "$@" == *upload* ]] && uploadbuild
 
-                git restore arch/arm64/boot/dts/vendor/qcom "arch/arm64/configs/$DEFCONFIG"
+                git restore arch/arm64/boot/dts/vendor/qcom arch/arm64/configs/$DEFCONFIG
         ;;
 
         3 )
