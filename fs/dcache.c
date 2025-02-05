@@ -2193,6 +2193,11 @@ seqretry:
 				continue;
 			if (dentry_cmp(dentry, str, hashlen_len(hashlen)) != 0)
 				continue;
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+			if (dentry->d_inode && unlikely(dentry->d_inode->i_state & INODE_STATE_SUS_PATH) && likely(current->susfs_task_state & TASK_STRUCT_NON_ROOT_USER_APP_PROC)) {
+				continue;
+			}
+#endif
 		}
 		*seqp = seq;
 		return dentry;
@@ -2275,6 +2280,12 @@ struct dentry *__d_lookup(const struct dentry *parent, const struct qstr *name)
 
 		if (dentry->d_name.hash != hash)
 			continue;
+
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+		if (dentry->d_inode && unlikely(dentry->d_inode->i_state & INODE_STATE_SUS_PATH) && likely(current->susfs_task_state & TASK_STRUCT_NON_ROOT_USER_APP_PROC)) {
+			continue;
+		}
+#endif
 
 		spin_lock(&dentry->d_lock);
 		if (dentry->d_parent != parent)
