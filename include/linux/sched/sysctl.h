@@ -83,16 +83,6 @@ extern unsigned int sysctl_preemptoff_tracing_threshold_ns;
 extern unsigned int sysctl_irqsoff_tracing_threshold_ns;
 #endif
 
-#ifdef CONFIG_PELT_COMPATIBILITY_LAYER
-extern unsigned int sysctl_sched_boost;
-extern int sysctl_sched_prefer_spread;
-extern unsigned int sysctl_sched_busy_hyst_enable_cpus;
-extern unsigned int sysctl_sched_busy_hyst;
-extern unsigned int sysctl_sched_group_upmigrate_pct;
-extern unsigned int sysctl_sched_group_downmigrate_pct;
-extern unsigned int sysctl_sched_ravg_window_nr_ticks;
-#endif /* CONFIG_PELT_COMPATIBILITY_LAYER */
-
 enum sched_tunable_scaling {
 	SCHED_TUNABLESCALING_NONE,
 	SCHED_TUNABLESCALING_LOG,
@@ -172,7 +162,4 @@ extern int sched_energy_aware_handler(struct ctl_table *table, int write,
 				 loff_t *ppos);
 #endif
 
-#define LIB_PATH_LENGTH 512
-extern char sched_lib_name[LIB_PATH_LENGTH];
-extern unsigned int sched_lib_mask_force;
 #endif /* _LINUX_SCHED_SYSCTL_H */
