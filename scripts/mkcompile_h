@@ -37,7 +37,7 @@ else
 fi
 
 if [ -z "$KBUILD_BUILD_TIMESTAMP" ]; then
-	TIMESTAMP=`date`
+	TIMESTAMP=$(date +"%Y-%m-%d")
 else
 	TIMESTAMP=$KBUILD_BUILD_TIMESTAMP
 fi
