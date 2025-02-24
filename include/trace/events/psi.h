@@ -46,13 +46,9 @@ TRACE_EVENT(psi_update_trigger_growth,
 		__entry->last_event_diff	= now - t->last_event_time;
 	),
 
-	TP_printk("%s growth=%llu threshold=%llu elapsed=%llu win=%llu last_event_diff=%llu",
-			show_psi_type(__entry->state),
-			__entry->growth,
-			__entry->threshold,
-			__entry->elapsed,
-			__entry->w_size,
-			__entry->last_event_diff)
+	TP_printk("State: %d Threshold: %llu ns",
+		__entry->state, __entry->threshold
+	)
 );
 
 TRACE_EVENT(psi_update_trigger_wake_up,

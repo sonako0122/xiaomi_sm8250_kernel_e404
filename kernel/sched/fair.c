@@ -29,7 +29,6 @@
 
 #ifdef CONFIG_SMP
 static inline bool task_fits_max(struct task_struct *p, int cpu);
-static inline unsigned long boosted_task_util(struct task_struct *task);
 #endif /* CONFIG_SMP */
 
 #ifdef CONFIG_SCHED_WALT
@@ -8340,7 +8339,7 @@ static int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 	struct sched_domain *sd;
 	cpumask_t *candidates;
 	bool is_rtg, curr_is_rtg;
-	struct find_best_target_env fbt_env;
+	struct find_best_target_env fbt_env = { 0 };
 	bool need_idle = wake_to_idle(p);
 	int placement_boost = task_boost_policy(p);
 	u64 start_t = 0;
