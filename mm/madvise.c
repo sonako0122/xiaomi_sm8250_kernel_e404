@@ -698,8 +698,7 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
 	}
 out:
 	if (nr_swap) {
-		if (mm == mm)
-			sync_mm_rss(mm);
+		sync_mm_rss(mm);
 
 		add_mm_counter(mm, MM_SWAPENTS, nr_swap);
 	}

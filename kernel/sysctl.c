@@ -131,6 +131,7 @@ static int __maybe_unused one = 1;
 static int __maybe_unused two = 2;
 static int __maybe_unused three = 3;
 static int __maybe_unused four = 4;
+static int __maybe_unused five = 5;
 static int int_max = INT_MAX;
 static unsigned long zero_ul;
 static unsigned long one_ul = 1;
@@ -147,8 +148,8 @@ static int two_hundred_fifty_five = 255;
 static int __maybe_unused two_hundred_million = 200000000;
 #ifdef CONFIG_PELT_COMPATIBILITY_LAYER
 static unsigned int ns_per_sec = NSEC_PER_SEC;
-static unsigned int __read_mostly sysctl_sched_group_upmigrate_pct = 100;
-static unsigned int __read_mostly sysctl_sched_group_downmigrate_pct = 95;
+unsigned int __read_mostly sysctl_sched_group_upmigrate_pct = 100;
+unsigned int __read_mostly sysctl_sched_group_downmigrate_pct = 95;
 #endif /* CONFIG_PELT_COMPATIBILITY_LAYER */
 #ifdef CONFIG_SCHED_WALT
 const int sched_user_hint_max = 1000;
