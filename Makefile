@@ -705,8 +705,8 @@ ifeq ($(CONFIG_LD_IS_LLD), y)
 KBUILD_LDFLAGS  += -mllvm -mcpu=cortex-a55
 endif
 else
-KBUILD_CFLAGS   += -O3
-KBUILD_AFLAGS   += -O3
+KBUILD_CFLAGS   += -O3 -mcpu=cortex-a76.cortex-a55
+KBUILD_AFLAGS   += -O3 -mcpu=cortex-a76.cortex-a55
 KBUILD_LDFLAGS  += -O3
 
 KBUILD_CFLAGS   += -fcf-protection=none -fno-stack-protector
