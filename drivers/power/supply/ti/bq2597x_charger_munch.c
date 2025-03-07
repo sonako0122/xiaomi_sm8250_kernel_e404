@@ -141,34 +141,34 @@ enum {
 #define VBAT_REG_STATUS_MASK		(1 << VBAT_REG_STATUS_SHIFT)
 #define IBAT_REG_STATUS_MASK		(1 << VBAT_REG_STATUS_SHIFT)
 
-#define bq_err(fmt, ...)								\
-do {											\
-	if (bq->mode == BQ25970_ROLE_MASTER)						\
-		printk(KERN_ERR "[bq2597x-MASTER]:%s:" fmt, __func__, ##__VA_ARGS__);	\
-	else if (bq->mode == BQ25970_ROLE_SLAVE)					\
-		printk(KERN_ERR "[bq2597x-SLAVE]:%s:" fmt, __func__, ##__VA_ARGS__);	\
-	else										\
-		printk(KERN_ERR "[bq2597x-STANDALONE]:%s:" fmt, __func__, ##__VA_ARGS__);\
+#define bq_err(fmt, ...)							  \
+do {										  \
+	if (bq->mode == BQ25970_ROLE_MASTER)					  \
+		pr_debug("[bq2597x-MASTER]:%s:" fmt, __func__, ##__VA_ARGS__);	  \
+	else if (bq->mode == BQ25970_ROLE_SLAVE)				  \
+		pr_debug("[bq2597x-SLAVE]:%s:" fmt, __func__, ##__VA_ARGS__);	  \
+	else									  \
+		pr_debug("[bq2597x-STANDALONE]:%s:" fmt, __func__, ##__VA_ARGS__);\
 } while (0);
 
-#define bq_info(fmt, ...)								\
-do {											\
-	if (bq->mode == BQ25970_ROLE_MASTER)						\
-		printk(KERN_INFO "[bq2597x-MASTER]:%s:" fmt, __func__, ##__VA_ARGS__);	\
-	else if (bq->mode == BQ25970_ROLE_SLAVE)					\
-		printk(KERN_INFO "[bq2597x-SLAVE]:%s:" fmt, __func__, ##__VA_ARGS__);	\
-	else										\
-		printk(KERN_INFO "[bq2597x-STANDALONE]:%s:" fmt, __func__, ##__VA_ARGS__);\
+#define bq_info(fmt, ...)							  \
+do {										  \
+	if (bq->mode == BQ25970_ROLE_MASTER)					  \
+		pr_debug("[bq2597x-MASTER]:%s:" fmt, __func__, ##__VA_ARGS__);	  \
+	else if (bq->mode == BQ25970_ROLE_SLAVE)				  \
+		pr_debug("[bq2597x-SLAVE]:%s:" fmt, __func__, ##__VA_ARGS__);	  \
+	else									  \
+		pr_debug("[bq2597x-STANDALONE]:%s:" fmt, __func__, ##__VA_ARGS__);\
 } while (0);
 
-#define bq_dbg(fmt, ...)								\
-do {											\
-	if (bq->mode == BQ25970_ROLE_MASTER)						\
-		printk(KERN_DEBUG "[bq2597x-MASTER]:%s:" fmt, __func__, ##__VA_ARGS__);	\
-	else if (bq->mode == BQ25970_ROLE_SLAVE)					\
-		printk(KERN_DEBUG "[bq2597x-SLAVE]:%s:" fmt, __func__, ##__VA_ARGS__);	\
-	else										\
-		printk(KERN_DEBUG "[bq2597x-STANDALONE]:%s:" fmt, __func__, ##__VA_ARGS__);\
+#define bq_dbg(fmt, ...)							  \
+do {										  \
+	if (bq->mode == BQ25970_ROLE_MASTER)					  \
+		pr_debug("[bq2597x-MASTER]:%s:" fmt, __func__, ##__VA_ARGS__);	  \
+	else if (bq->mode == BQ25970_ROLE_SLAVE)				  \
+		pr_debug("[bq2597x-SLAVE]:%s:" fmt, __func__, ##__VA_ARGS__);	  \
+	else									  \
+		pr_debug("[bq2597x-STANDALONE]:%s:" fmt, __func__, ##__VA_ARGS__);\
 } while (0);
 
 enum hvdcp3_type {
@@ -2165,27 +2165,27 @@ static void bq2597x_dump_important_regs(struct bq2597x *bq)
 	
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_0A, &val);
 	if (!ret)
-		bq_err("dump converter state Reg [%02X] = 0x%02X\n",
+		bq_dbg("dump converter state Reg [%02X] = 0x%02X\n",
 				BQ2597X_REG_0A, val);
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_0D, &val);
 	if (!ret)
-		bq_err("dump int stat Reg[%02X] = 0x%02X\n",
+		bq_dbg("dump int stat Reg[%02X] = 0x%02X\n",
 				BQ2597X_REG_0D, val);
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_0E, &val);
 	if (!ret)
-		bq_err("dump int flag Reg[%02X] = 0x%02X\n",
+		bq_dbg("dump int flag Reg[%02X] = 0x%02X\n",
 				BQ2597X_REG_0E, val);
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_10, &val);
 	if (!ret)
-		bq_err("dump fault stat Reg[%02X] = 0x%02X\n",
+		bq_dbg("dump fault stat Reg[%02X] = 0x%02X\n",
 				BQ2597X_REG_10, val);
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_11, &val);
 	if (!ret)
-		bq_err("dump fault flag Reg[%02X] = 0x%02X\n",
+		bq_dbg("dump fault flag Reg[%02X] = 0x%02X\n",
 				BQ2597X_REG_11, val);
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_06, &val);
@@ -2195,7 +2195,7 @@ static void bq2597x_dump_important_regs(struct bq2597x *bq)
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_2D, &val);
 	if (!ret)
-		bq_err("dump regulation flag Reg[%02X] = 0x%02X\n",
+		bq_dbg("dump regulation flag Reg[%02X] = 0x%02X\n",
 				BQ2597X_REG_2D, val);
 
 	ret = bq2597x_read_byte(bq, 0x31, &val);
@@ -2293,9 +2293,9 @@ static int bq2597x_check_vbus_error_status(struct bq2597x *bq)
 	u8 stat = 0;
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_0A, &stat);
-	bq_err("BQ2597X_REG_0A:0x%02x\n", stat);
+	bq_dbg("BQ2597X_REG_0A:0x%02x\n", stat);
 	if (!ret) {
-		bq_err("BQ2597X_REG_0A:0x%02x\n", stat);
+		bq_dbg("BQ2597X_REG_0A:0x%02x\n", stat);
 		if (stat & VBUS_ERROR_LOW_MASK)
 			return VBUS_ERROR_LOW;
 		else if (stat & VBUS_ERROR_HIGH_MASK)
@@ -2442,7 +2442,7 @@ static int bq2597x_get_dev_role(struct i2c_client *client)
 		return -EINVAL;
 	}
 
-	dev_info(&client->dev, "%s: matched to %s\n", __func__, of_id->compatible);
+	dev_dbg(&client->dev, "%s: matched to %s\n", __func__, of_id->compatible);
 
 	return (uintptr_t)of_id->data;
 }
@@ -2579,7 +2579,7 @@ static int bq2597x_resume(struct device *dev)
 	}
 	bq2597x_enable_adc(bq, true);
 	power_supply_changed(bq->fc2_psy);
-	bq_err("Resume successfully!");
+	bq_dbg("Resume successfully!");
 
 	return 0;
 }
