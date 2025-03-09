@@ -71,6 +71,14 @@ static u32 tcp_metric_get(const struct tcp_metrics_block *tm,
 	return READ_ONCE(tm->tcpm_vals[idx]);
 }
 
+static void tcp_metric_set(struct tcp_metrics_block *tm,
+	enum tcp_metric_index idx,
+	u32 val)
+{
+/* Paired with READ_ONCE() in tcp_metric_get() */
+WRITE_ONCE(tm->tcpm_vals[idx], val);
+}
+
 static bool addr_same(const struct inetpeer_addr *a,
 		      const struct inetpeer_addr *b)
 {
