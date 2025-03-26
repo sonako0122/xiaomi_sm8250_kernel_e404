@@ -54,7 +54,7 @@ int kgsl_allocate_global(struct kgsl_device *device,
 		ret = kgsl_sharedmem_alloc_contig(device, memdesc,
 						(size_t) size);
 	else {
-		ret = kgsl_sharedmem_page_alloc_user(device, memdesc, (size_t) size);
+		ret = kgsl_sharedmem_page_alloc_user(memdesc, (size_t) size);
 		if (ret == 0) {
 			if (kgsl_memdesc_map(memdesc) == NULL) {
 				kgsl_sharedmem_free(memdesc);
@@ -445,7 +445,7 @@ static int kgsl_allocate_secure(struct kgsl_device *device,
 	int ret;
 
 	if (MMU_FEATURE(&device->mmu, KGSL_MMU_HYP_SECURE_ALLOC))
-		ret = kgsl_sharedmem_page_alloc_user(device, memdesc, size);
+		ret = kgsl_sharedmem_page_alloc_user(memdesc, size);
 	else
 		ret = kgsl_cma_alloc_secure(device, memdesc, size);
 
@@ -465,7 +465,7 @@ int kgsl_allocate_user(struct kgsl_device *device,
 	else if (flags & KGSL_MEMFLAGS_SECURE)
 		ret = kgsl_allocate_secure(device, memdesc, size);
 	else
-		ret = kgsl_sharedmem_page_alloc_user(device, memdesc, size);
+		ret = kgsl_sharedmem_page_alloc_user(memdesc, size);
 
 	return ret;
 }
@@ -849,8 +849,7 @@ void kgsl_memdesc_init(struct kgsl_device *device,
 #ifdef CONFIG_QCOM_KGSL_USE_SHMEM
 static int kgsl_alloc_page(int *page_size, struct page **pages,
 			unsigned int pages_len, unsigned int *align,
-			struct file *shmem_filp, unsigned int page_off,
-			struct device *dev)
+			struct file *shmem_filp, unsigned int page_off)
 {
 	struct page *page;
 
@@ -862,7 +861,7 @@ static int kgsl_alloc_page(int *page_size, struct page **pages,
 	if (IS_ERR(page))
 		return PTR_ERR(page);
 
-	kgsl_zero_page(page, 0, dev);
+	kgsl_zero_page(page, 0);
 
 	*pages = page;
 
@@ -902,10 +901,9 @@ static int kgsl_memdesc_file_setup(struct kgsl_memdesc *memdesc, uint64_t size)
 #else
 static int kgsl_alloc_page(int *page_size, struct page **pages,
 			unsigned int pages_len, unsigned int *align,
-			struct file *shmem_filp, unsigned int page_off,
-			struct device *dev)
+			struct file *shmem_filp, unsigned int page_off)
 {
-	return kgsl_pool_alloc_page(page_size, pages, pages_len, align, dev);
+	return kgsl_pool_alloc_page(page_size, pages, pages_len, align);
 }
 
 void kgsl_free_pages(struct kgsl_memdesc *memdesc)
@@ -952,8 +950,9 @@ void kgsl_free_pages_from_sgt(struct kgsl_memdesc *memdesc)
 	}
 }
 
-int kgsl_sharedmem_page_alloc_user(struct kgsl_device *device,
-				struct kgsl_memdesc *memdesc, uint64_t size)
+int
+kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
+			uint64_t size)
 {
 	int ret = 0;
 	unsigned int j, page_size, len_alloc;
@@ -1035,8 +1034,7 @@ int kgsl_sharedmem_page_alloc_user(struct kgsl_device *device,
 		page_count = kgsl_alloc_page(&page_size,
 					memdesc->pages + pcount,
 					len_alloc - pcount,
-					&align, memdesc->shmem_filp,
-					pcount, device->dev);
+					&align, memdesc->shmem_filp, pcount);
 		if (page_count <= 0) {
 			if (page_count == -EAGAIN)
 				continue;
@@ -1591,32 +1589,18 @@ bool kgsl_sharedmem_get_noretry(void)
 	return sharedmem_noretry_flag;
 }
 
-static void kgsl_pool_sync_for_device(struct device *dev, struct page *page,
-		size_t size)
-{
-	struct scatterlist sg;
-
-	/* The caller may choose not to specify a device on purpose */
-	if (!dev)
-		return;
-
-	sg_init_table(&sg, 1);
-	sg_set_page(&sg, page, size, 0);
-	sg_dma_address(&sg) = page_to_phys(page);
-
-	dma_sync_sg_for_device(dev, &sg, 1, DMA_BIDIRECTIONAL);
-}
-
-void kgsl_zero_page(struct page *p, unsigned int order,
-					struct device *dev)
+void kgsl_zero_page(struct page *p, unsigned int order)
 {
 	int i;
 
 	for (i = 0; i < (1 << order); i++) {
 		struct page *page = nth_page(p, i);
-		clear_highpage(page);
+		void *addr = kmap_atomic(page);
+
+		memset(addr, 0, PAGE_SIZE);
+		dmac_flush_range(addr, addr + PAGE_SIZE);
+		kunmap_atomic(addr);
 	}
-	kgsl_pool_sync_for_device(dev, p, PAGE_SIZE << order);
 }
 
 void kgsl_flush_page(struct page *page)
