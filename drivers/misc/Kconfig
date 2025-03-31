@@ -4,6 +4,12 @@
 
 menu "Misc devices"
 
+config E404_SIGNATURE
+ 	tristate "Signature E404 kernel build"
+ 	default n
+ 	help
+ 	  Enabling this require needed files of e404_attributes.c and e404_attributes.h
+
 config SPI_XIAOMI_TP
         bool
         depends on SPI

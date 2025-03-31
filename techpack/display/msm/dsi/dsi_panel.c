@@ -20,6 +20,10 @@
 #include "xiaomi_frame_stat.h"
 #include "dsi_mi_feature.h"
 
+#ifdef CONFIG_E404_SIGNATURE
+#include <linux/e404_attributes.h>
+#endif
+
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -2058,26 +2062,44 @@ static int dsi_panel_parse_phy_props(struct dsi_panel *panel)
 	struct dsi_parser_utils *utils = &panel->utils;
 	const char *name = panel->name;
 
-	rc = utils->read_u32(utils->data,
-		  "qcom,mdss-pan-physical-width-dimension", &val);
-	if (rc) {
-		DSI_DEBUG("[%s] Physical panel width is not defined\n", name);
-		props->panel_width_mm = 0;
-		rc = 0;
+#ifdef CONFIG_E404_SIGNATURE
+    if (e404_data.e404_rom_type == 1) {
+        props->panel_width_mm = e404_data.e404_panel_width;
+		pr_alert("E404: Overriding DTBO panel width for rom type 1");
+		props->panel_height_mm = e404_data.e404_panel_height;
+		pr_alert("E404: Overriding DTBO panel height for rom type 1");
+    } else if (e404_data.e404_rom_type == 2) {
+		props->panel_width_mm = e404_data.e404_oem_panel_width;
+		pr_alert("E404: Overriding DTBO panel width for rom type 2");
+		props->panel_height_mm = e404_data.e404_oem_panel_height;
+		pr_alert("E404: Overriding DTBO panel height for rom type 2");
 	} else {
-		props->panel_width_mm = val;
+        rc = utils->read_u32(utils->data, "qcom,mdss-pan-physical-width-dimension", &val);
+        props->panel_width_mm = val;
+		pr_alert("E404: Using default DTBO panel width");
+		rc = utils->read_u32(utils->data, "qcom,mdss-pan-physical-height-dimension", &val);
+		props->panel_height_mm = val;
+		pr_alert("E404: Using default DTBO panel height");
+    }
+#else
+	rc = utils->read_u32(utils->data, "qcom,mdss-pan-physical-width-dimension", &val);
+	if (rc) {
+  		DSI_DEBUG("[%s] Physical panel width is not defined\n", name);
+  		props->panel_width_mm = 0;
+  		rc = 0;
+	} else {
+  		props->panel_width_mm = val;
 	}
 
-	rc = utils->read_u32(utils->data,
-				  "qcom,mdss-pan-physical-height-dimension",
-				  &val);
+	rc = utils->read_u32(utils->data, "qcom,mdss-pan-physical-height-dimension", &val);
 	if (rc) {
-		DSI_DEBUG("[%s] Physical panel height is not defined\n", name);
-		props->panel_height_mm = 0;
-		rc = 0;
+  		DSI_DEBUG("[%s] Physical panel height is not defined\n", name);
+  		props->panel_height_mm = 0;
+  		rc = 0;
 	} else {
-		props->panel_height_mm = val;
+  		props->panel_height_mm = val;
 	}
+#endif
 
 	str = utils->get_property(utils->data,
 			"qcom,mdss-dsi-panel-orientation", NULL);
