@@ -35,6 +35,10 @@
 #include <linux/devfreq_boost.h>
 #include <linux/cpu_input_boost.h>
 
+#ifdef CONFIG_E404_SIGNATURE
+#include <linux/e404_attributes.h>
+#endif
+
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
 
@@ -2610,8 +2614,15 @@ int drm_mode_atomic_ioctl(struct drm_device *dev,
 
 	/* Boost CPU and DDR when committing a new frame */
 	if (!(arg->flags & DRM_MODE_ATOMIC_TEST_ONLY)) {
+#ifdef CONFIG_E404_SIGNATURE
+		if (e404_data.e404_cpu_input_boost == 1)
+			cpu_input_boost_kick();
+		if (e404_data.e404_dvq_input_boost == 1)
+			devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
+#else
 		cpu_input_boost_kick();
 		devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
+#endif	
 	}
 
 	drm_modeset_acquire_init(&ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE);
