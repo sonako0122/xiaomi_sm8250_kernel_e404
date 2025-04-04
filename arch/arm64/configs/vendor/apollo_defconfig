@@ -1566,7 +1566,79 @@ CONFIG_MHI_UCI=y
 CONFIG_MHI_SATELLITE=y
 # CONFIG_CONNECTOR is not set
 # CONFIG_GNSS is not set
-# CONFIG_MTD is not set
+CONFIG_MTD=y
+# CONFIG_MTD_REDBOOT_PARTS is not set
+# CONFIG_MTD_CMDLINE_PARTS is not set
+# CONFIG_MTD_AFS_PARTS is not set
+CONFIG_MTD_OF_PARTS=y
+# CONFIG_MTD_AR7_PARTS is not set
+
+#
+# Partition parsers
+#
+
+#
+# User Modules And Translation Layers
+#
+CONFIG_MTD_BLKDEVS=y
+CONFIG_MTD_BLOCK=y
+# CONFIG_FTL is not set
+# CONFIG_NFTL is not set
+# CONFIG_INFTL is not set
+# CONFIG_RFD_FTL is not set
+# CONFIG_SSFDC is not set
+# CONFIG_SM_FTL is not set
+CONFIG_MTD_OOPS=y
+# CONFIG_MTD_SWAP is not set
+# CONFIG_MTD_PARTITIONED_MASTER is not set
+
+#
+# RAM/ROM/Flash chip drivers
+#
+# CONFIG_MTD_CFI is not set
+# CONFIG_MTD_JEDECPROBE is not set
+CONFIG_MTD_MAP_BANK_WIDTH_1=y
+CONFIG_MTD_MAP_BANK_WIDTH_2=y
+CONFIG_MTD_MAP_BANK_WIDTH_4=y
+CONFIG_MTD_CFI_I1=y
+CONFIG_MTD_CFI_I2=y
+# CONFIG_MTD_RAM is not set
+# CONFIG_MTD_ROM is not set
+# CONFIG_MTD_ABSENT is not set
+
+#
+# Mapping drivers for chip access
+#
+# CONFIG_MTD_COMPLEX_MAPPINGS is not set
+# CONFIG_MTD_INTEL_VR_NOR is not set
+# CONFIG_MTD_PLATRAM is not set
+
+#
+# Self-contained MTD device drivers
+#
+# CONFIG_MTD_PMC551 is not set
+# CONFIG_MTD_DATAFLASH is not set
+# CONFIG_MTD_MCHP23K256 is not set
+# CONFIG_MTD_SST25L is not set
+# CONFIG_MTD_SLRAM is not set
+# CONFIG_MTD_PHRAM is not set
+# CONFIG_MTD_MTDRAM is not set
+CONFIG_MTD_BLOCK2MTD=y
+
+#
+# Disk-On-Chip Device Drivers
+#
+# CONFIG_MTD_DOCG3 is not set
+# CONFIG_MTD_ONENAND is not set
+# CONFIG_MTD_NAND is not set
+# CONFIG_MTD_SPI_NAND is not set
+
+#
+# LPDDR & LPDDR2 PCM memory drivers
+#
+# CONFIG_MTD_LPDDR is not set
+# CONFIG_MTD_SPI_NOR is not set
+# CONFIG_MTD_UBI is not set
 CONFIG_DTC=y
 CONFIG_OF=y
 # CONFIG_OF_UNITTEST is not set
@@ -5438,7 +5510,18 @@ CONFIG_SDCARD_FS=y
 # CONFIG_QNX4FS_FS is not set
 # CONFIG_QNX6FS_FS is not set
 # CONFIG_ROMFS_FS is not set
-# CONFIG_PSTORE is not set
+CONFIG_PSTORE=y
+# CONFIG_PSTORE_DEFLATE_COMPRESS is not set
+# CONFIG_PSTORE_LZO_COMPRESS is not set
+# CONFIG_PSTORE_LZ4_COMPRESS is not set
+# CONFIG_PSTORE_LZ4HC_COMPRESS is not set
+# CONFIG_PSTORE_842_COMPRESS is not set
+# CONFIG_PSTORE_ZSTD_COMPRESS is not set
+# CONFIG_PSTORE_COMPRESS is not set
+CONFIG_PSTORE_CONSOLE=y
+CONFIG_PSTORE_PMSG=y
+CONFIG_PSTORE_RAM=y
+CONFIG_PSTORE_LAST_KMSG=y
 # CONFIG_SYSV_FS is not set
 # CONFIG_UFS_FS is not set
 CONFIG_EROFS_FS=y
