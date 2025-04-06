@@ -16,13 +16,34 @@ struct e404_attributes e404_data = {
 
 static struct kobject *e404_kobj;
 
+int e404_early_kernelsu = 0;
+int e404_early_effcpu = 0;
+int e404_early_rom_type = 0;
+
+static int __init parse_e404_kernelsu(char *str)
+{
+    return kstrtoint(str, 10, &e404_early_kernelsu);
+}
+early_param("e404_kernelsu", parse_e404_kernelsu);
+
+static int __init parse_e404_effcpu(char *str)
+{
+    return kstrtoint(str, 10, &e404_early_effcpu);
+}
+early_param("e404_effcpu", parse_e404_effcpu);
+
+static int __init parse_e404_rom_type(char *str)
+{
+    return kstrtoint(str, 10, &e404_early_rom_type);
+}
+early_param("e404_rom_type", parse_e404_rom_type);
+
 static void e404_parse_attributes(void) {
-    char *cmdline = saved_command_line;
+    e404_data.e404_kernelsu = e404_early_kernelsu;
+    e404_data.e404_effcpu = e404_early_effcpu;
+    e404_data.e404_rom_type = e404_early_rom_type;
 
-    extract_e404_cmdline(cmdline, "e404_rom_type=", &e404_data.e404_rom_type);
-    extract_e404_cmdline(cmdline, "e404_effcpu=", &e404_data.e404_effcpu);
-
-    pr_alert("E404 Attr: KernelSU=%d, ROMType=%d, EFFCPU=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, CBOOST=%d, DBOOST=%d\n",
+    pr_alert("E404 Attr: KernelSU=%d, RomType=%d, EFFCPU=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, CIBoost=%d, DIBoost=%d\n",
         e404_data.e404_kernelsu,
         e404_data.e404_rom_type,
         e404_data.e404_effcpu,
@@ -33,7 +54,6 @@ static void e404_parse_attributes(void) {
         e404_data.e404_cpu_input_boost,
         e404_data.e404_dvq_input_boost);
 }
-
 
 #define E404_ATTR_RO(name) \
 static ssize_t name##_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) { \
@@ -108,9 +128,9 @@ static void __exit e404_exit(void) {
     pr_alert("E404: Kernel Module & Sysfs Removed\n");
 }
 
-module_init(e404_init);
+core_initcall(e404_init);
 module_exit(e404_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("kvsnr113");
-MODULE_DESCRIPTION("E404 manager via cmdline and sysfs");
+MODULE_DESCRIPTION("E404 manager via early_param and sysfs");
