@@ -41,16 +41,17 @@ static ssize_t name##_show(struct kobject *kobj, struct kobj_attribute *attr, ch
 } \
 static struct kobj_attribute name##_attr = __ATTR(name, 0444, name##_show, NULL);
 
-
 #define E404_ATTR_RW(name) \
 static ssize_t name##_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) { \
     return sprintf(buf, "%d\n", e404_data.name); \
 } \
 static ssize_t name##_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) { \
-    int ret, val; \
+    int ret, val, old_val; \
     ret = kstrtoint(buf, 10, &val); \
     if (ret) return ret; \
+    old_val = e404_data.name; \
     e404_data.name = val; \
+    pr_alert("E404: %s changed from %d to %d\n", #name, old_val, val); \
     sysfs_notify(e404_kobj, NULL, #name); \
     return count; \
 } \
