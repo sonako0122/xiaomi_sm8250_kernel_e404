@@ -482,11 +482,6 @@ static int qcom_cpufreq_hw_read_lut(struct platform_device *pdev,
 	u32 vc;
 	unsigned long cpu;
 	int ret, of_len;
-#ifdef CONFIG_E404_SIGNATURE
-	char *cmdline = saved_command_line;
-	int rc;
-	int tmp;
-#endif
 	u32 *of_table = NULL;
 	char tbl_name[32];
 	bool invalidate_freq;
@@ -497,8 +492,7 @@ static int qcom_cpufreq_hw_read_lut(struct platform_device *pdev,
 		return -ENOMEM;
 
 #ifdef CONFIG_E404_SIGNATURE
-	rc = extract_e404_cmdline(cmdline, "e404_effcpu=", &tmp);
-	if (rc == 0 && tmp == 1) {
+	if (e404_data.e404_effcpu == 1) {
 		snprintf(tbl_name, sizeof(tbl_name), "qcom,effcpufreq-table-%d", domain_index);
 		pr_alert("E404: Using effcpu CPUFreq from DTB");
 	} else {
