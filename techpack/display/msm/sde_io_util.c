@@ -14,7 +14,6 @@
 #define MAX_I2C_CMDS  16
 void dss_reg_w(struct dss_io_data *io, u32 offset, u32 value, u32 debug)
 {
-
 	if (!io || !io->base) {
 		DEV_ERR("%pS->%s: invalid input\n",
 			__builtin_return_address(0), __func__);
