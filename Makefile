@@ -691,7 +691,6 @@ KBUILD_AFLAGS   += -Os
 KBUILD_LDFLAGS  += -Os
 else ifeq ($(cc-name),clang)
 KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
-KBUILD_CFLAGS   += -fcf-protection=none -fno-stack-protector
 
 # MLGO
 KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
@@ -708,8 +707,6 @@ else
 KBUILD_CFLAGS   += -O3 -mcpu=cortex-a76.cortex-a55
 KBUILD_AFLAGS   += -O3 -mcpu=cortex-a76.cortex-a55
 KBUILD_LDFLAGS  += -O3
-
-KBUILD_CFLAGS   += -fcf-protection=none -fno-stack-protector
 
 ifdef CONFIG_INLINE_OPTIMIZATION
 ifdef CONFIG_CC_IS_CLANG
