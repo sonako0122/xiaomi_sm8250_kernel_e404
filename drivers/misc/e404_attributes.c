@@ -6,7 +6,6 @@ struct e404_attributes e404_data = {
     .e404_kernelsu = 0,
     .e404_rom_type = 0,
     .e404_effcpu = 0,
-    .e404_cpu_input_boost = 1,
     .e404_dvq_input_boost = 1,
     .e404_panel_width = 70,
     .e404_panel_height = 155,
@@ -43,7 +42,7 @@ static void e404_parse_attributes(void) {
     e404_data.e404_effcpu = e404_early_effcpu;
     e404_data.e404_rom_type = e404_early_rom_type;
 
-    pr_alert("E404 Attr: KernelSU=%d, RomType=%d, EFFCPU=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, CIBoost=%d, DIBoost=%d\n",
+    pr_alert("E404 Attr: KernelSU=%d, RomType=%d, EFFCPU=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, DIBoost=%d\n",
         e404_data.e404_kernelsu,
         e404_data.e404_rom_type,
         e404_data.e404_effcpu,
@@ -51,7 +50,6 @@ static void e404_parse_attributes(void) {
         e404_data.e404_panel_height,
         e404_data.e404_oem_panel_width,
         e404_data.e404_oem_panel_height,
-        e404_data.e404_cpu_input_boost,
         e404_data.e404_dvq_input_boost);
 }
 
@@ -85,7 +83,6 @@ E404_ATTR_RO(e404_panel_height);
 E404_ATTR_RO(e404_oem_panel_width);
 E404_ATTR_RO(e404_oem_panel_height);
 
-E404_ATTR_RW(e404_cpu_input_boost);
 E404_ATTR_RW(e404_dvq_input_boost);
 
 static struct attribute *e404_attrs[] = {
@@ -96,7 +93,6 @@ static struct attribute *e404_attrs[] = {
     &e404_panel_height_attr.attr,
     &e404_oem_panel_width_attr.attr,
     &e404_oem_panel_height_attr.attr,
-    &e404_cpu_input_boost_attr.attr,
     &e404_dvq_input_boost_attr.attr,
     NULL,
 };

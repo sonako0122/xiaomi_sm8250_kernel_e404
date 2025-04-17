@@ -11,7 +11,6 @@ struct e404_attributes {
     int e404_kernelsu;
     int e404_rom_type;
     int e404_effcpu;
-    int e404_cpu_input_boost;
     int e404_dvq_input_boost;
     int e404_panel_width;
     int e404_panel_height;
