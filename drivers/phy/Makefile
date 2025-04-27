@@ -14,4 +14,12 @@ obj-$(CONFIG_ARCH_MEDIATEK)		+= mediatek/
 obj-$(CONFIG_ARCH_RENESAS)		+= renesas/
 obj-$(CONFIG_ARCH_ROCKCHIP)		+= rockchip/
 obj-$(CONFIG_ARCH_TEGRA)		+= tegra/
-obj-y					+= qualcomm/
+obj-y					+= broadcom/	\
+					   hisilicon/	\
+					   marvell/	\
+					   motorola/	\
+					   qualcomm/	\
+					   ralink/	\
+					   samsung/	\
+					   st/		\
+					   ti/
