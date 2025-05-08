@@ -247,10 +247,10 @@ static int ir_spi_probe(struct spi_device *spi)
 
 	#ifdef CONFIG_E404_SIGNATURE
 	if (e404_data.e404_ir_type != 2) {
-		dev_err(&spi->dev, "E404: Cancelled probe of IR-SPI-MI\n");
+		dev_alert(&spi->dev, "E404: Cancelled probe of IR SPI MI\n");
 		return -ENODEV;
 	} else {
-		dev_info(&spi->dev, "E404: Using IR-SPI-MI\n");
+		dev_alert(&spi->dev, "E404: Using IR SPI MI\n");
 	}
 	#endif
 

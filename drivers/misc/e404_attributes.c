@@ -5,8 +5,8 @@
 struct e404_attributes e404_data = {
     .e404_kernelsu = 0,
     .e404_rom_type = 0,
-    .e404_ir_type = 1
     .e404_effcpu = 0,
+    .e404_ir_type = 1,
     .e404_dvq_input_boost = 1,
     .e404_panel_width = 70,
     .e404_panel_height = 155,
@@ -21,29 +21,38 @@ int e404_early_effcpu = 0;
 int e404_early_rom_type = 0;
 int e404_early_ir_type = 1;
 
-static int __init parse_e404_kernelsu(char *str)
+static int __init parse_e404_args(char *str)
 {
-    return kstrtoint(str, 10, &e404_early_kernelsu);
-}
-early_param("e404_kernelsu", parse_e404_kernelsu);
+    char *arg;
 
-static int __init parse_e404_effcpu(char *str)
-{
-    return kstrtoint(str, 10, &e404_early_effcpu);
-}
-early_param("e404_effcpu", parse_e404_effcpu);
+    while ((arg = strsep(&str, " ,")) != NULL) {
+        if (!*arg) continue;
 
-static int __init parse_e404_rom_type(char *str)
-{
-    return kstrtoint(str, 10, &e404_early_rom_type);
-}
-early_param("e404_rom_type", parse_e404_rom_type);
+        pr_alert("E404: Parsing flag: %s\n", arg);
 
-static int __init parse_e404_ir_type(char *str)
-{
-    return kstrtoint(str, 10, &e404_ir_rom_type);
+        if (strcmp(arg, "root_ksu") == 0)
+            e404_early_kernelsu = 1;
+        else if (strcmp(arg, "root_noksu") == 0)
+            e404_early_kernelsu = 0;
+        else if (strcmp(arg, "dtb_effcpu") == 0)
+            e404_early_effcpu = 1;
+        else if (strcmp(arg, "dtb_def") == 0)
+            e404_early_effcpu = 0;
+        else if (strcmp(arg, "dtbo_oem") == 0)
+            e404_early_rom_type = 2;
+        else if (strcmp(arg, "dtbo_def") == 0)
+            e404_early_rom_type = 1;
+        else if (strcmp(arg, "ir_blaster_mi") == 0)
+            e404_early_ir_type = 2;
+        else if (strcmp(arg, "ir_blaster_def") == 0)
+            e404_early_ir_type = 1;
+        else
+            pr_alert("E404: Unknown flag: %s\n", arg);
+    }
+
+    return 0;
 }
-early_param("e404_ir_type", parse_e404_ir_type);
+early_param("e404_args", parse_e404_args);
 
 static void e404_parse_attributes(void) {
     e404_data.e404_kernelsu = e404_early_kernelsu;
@@ -51,7 +60,7 @@ static void e404_parse_attributes(void) {
     e404_data.e404_rom_type = e404_early_rom_type;
     e404_data.e404_ir_type = e404_early_ir_type;
 
-    pr_alert("E404 Attr: KernelSU=%d, RomType=%d, IR=%d, EFFCPU=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, DIBoost=%d\n",
+    pr_alert("E404 Attributes: KernelSU=%d, RomType=%d, IR=%d, EFFCPU=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, DIBoost=%d\n",
         e404_data.e404_kernelsu,
         e404_data.e404_rom_type,
         e404_data.e404_ir_type,
@@ -85,21 +94,21 @@ static ssize_t name##_store(struct kobject *kobj, struct kobj_attribute *attr, c
 } \
 static struct kobj_attribute name##_attr = __ATTR(name, 0664, name##_show, name##_store);
 
-E404_ATTR_RO(e404_rom_type);
 E404_ATTR_RO(e404_kernelsu);
 E404_ATTR_RO(e404_effcpu);
+E404_ATTR_RO(e404_rom_type);
+E404_ATTR_RO(e404_ir_type);
 E404_ATTR_RO(e404_panel_width);
 E404_ATTR_RO(e404_panel_height);
 E404_ATTR_RO(e404_oem_panel_width);
 E404_ATTR_RO(e404_oem_panel_height);
-E404_ATTR_RO(e404_ir_type);
 
 E404_ATTR_RW(e404_dvq_input_boost);
 
 static struct attribute *e404_attrs[] = {
     &e404_kernelsu_attr.attr,
-    &e404_rom_type_attr.attr,
     &e404_effcpu_attr.attr,
+    &e404_rom_type_attr.attr,
     &e404_ir_type_attr.attr,
     &e404_panel_width_attr.attr,
     &e404_panel_height_attr.attr,
@@ -142,3 +151,4 @@ module_exit(e404_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("kvsnr113");
 MODULE_DESCRIPTION("E404 manager via early_param and sysfs");
+MODULE_VERSION("1.3");
