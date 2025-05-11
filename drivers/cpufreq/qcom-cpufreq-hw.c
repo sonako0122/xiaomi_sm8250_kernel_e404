@@ -499,11 +499,6 @@ static int qcom_cpufreq_hw_read_lut(struct platform_device *pdev,
 	u32 vc;
 	unsigned long cpu;
 	int ret, of_len, max_index;
-#ifdef CONFIG_E404_SIGNATURE
-	char *cmdline = saved_command_line;
-	int rc;
-	int tmp;
-#endif
 	u32 *of_table = NULL;
 	char tbl_name[32];
 	bool invalidate_freq;
