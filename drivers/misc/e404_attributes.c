@@ -4,9 +4,10 @@
 
 struct e404_attributes e404_data = {
     .e404_kernelsu = 0,
-    .e404_rom_type = 0,
     .e404_effcpu = 0,
+    .e404_rom_type = 1,
     .e404_ir_type = 1,
+    .e404_batt_profile = 1,
     .e404_dvq_input_boost = 1,
     .e404_panel_width = 70,
     .e404_panel_height = 155,
@@ -18,8 +19,9 @@ static struct kobject *e404_kobj;
 
 int e404_early_kernelsu = 0;
 int e404_early_effcpu = 0;
-int e404_early_rom_type = 0;
+int e404_early_rom_type = 1;
 int e404_early_ir_type = 1;
+int e404_early_batt_profile = 1;
 
 static int __init parse_e404_args(char *str)
 {
@@ -46,6 +48,10 @@ static int __init parse_e404_args(char *str)
             e404_early_ir_type = 2;
         else if (strcmp(arg, "ir_blaster_def") == 0)
             e404_early_ir_type = 1;
+        else if (strcmp(arg, "batt_def") == 0)
+            e404_early_batt_profile = 1;
+        else if (strcmp(arg, "batt_5k") == 0)
+            e404_early_batt_profile = 2;
         else
             pr_alert("E404: Unknown flag: %s\n", arg);
     }
@@ -59,12 +65,14 @@ static void e404_parse_attributes(void) {
     e404_data.e404_effcpu = e404_early_effcpu;
     e404_data.e404_rom_type = e404_early_rom_type;
     e404_data.e404_ir_type = e404_early_ir_type;
+    e404_data.e404_batt_profile = e404_early_batt_profile;
 
-    pr_alert("E404 Attributes: KernelSU=%d, RomType=%d, IR=%d, EFFCPU=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, DIBoost=%d\n",
+    pr_alert("E404 Attributes: KernelSU=%d, EFFCPU=%d, RomType=%d, IR=%d, Panel_Width=%d, Panel_Height=%d, OEM_Panel_Width=%d, OEM_Panel_Height=%d, DIBoost=%d\n",
         e404_data.e404_kernelsu,
+        e404_data.e404_effcpu,
         e404_data.e404_rom_type,
         e404_data.e404_ir_type,
-        e404_data.e404_effcpu,
+        e404_data.e404_batt_profile,
         e404_data.e404_panel_width,
         e404_data.e404_panel_height,
         e404_data.e404_oem_panel_width,
@@ -98,6 +106,7 @@ E404_ATTR_RO(e404_kernelsu);
 E404_ATTR_RO(e404_effcpu);
 E404_ATTR_RO(e404_rom_type);
 E404_ATTR_RO(e404_ir_type);
+E404_ATTR_RO(e404_batt_profile);
 E404_ATTR_RO(e404_panel_width);
 E404_ATTR_RO(e404_panel_height);
 E404_ATTR_RO(e404_oem_panel_width);
@@ -110,6 +119,7 @@ static struct attribute *e404_attrs[] = {
     &e404_effcpu_attr.attr,
     &e404_rom_type_attr.attr,
     &e404_ir_type_attr.attr,
+    &e404_batt_profile_attr.attr,
     &e404_panel_width_attr.attr,
     &e404_panel_height_attr.attr,
     &e404_oem_panel_width_attr.attr,
