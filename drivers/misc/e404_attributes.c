@@ -45,9 +45,9 @@ static int __init parse_e404_args(char *str)
         else if (strcmp(arg, "dtbo_def") == 0)
             e404_early_rom_type = 1;
         else if (strcmp(arg, "ir_blaster_mi") == 0)
-            e404_early_ir_type = 2;
-        else if (strcmp(arg, "ir_blaster_def") == 0)
             e404_early_ir_type = 1;
+        else if (strcmp(arg, "ir_blaster_def") == 0)
+            e404_early_ir_type = 2;
         else if (strcmp(arg, "batt_def") == 0)
             e404_early_batt_profile = 1;
         else if (strcmp(arg, "batt_5k") == 0)
