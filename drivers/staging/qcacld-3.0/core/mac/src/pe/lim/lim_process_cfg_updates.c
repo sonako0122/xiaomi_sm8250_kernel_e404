@@ -129,7 +129,8 @@ void lim_handle_param_update(struct mac_context *mac, eUpdateIEsType cfgId)
 
 		if (status != QDF_STATUS_SUCCESS)
 			pe_err("Failed lim_post_msg_api %u", status);
-			break;
+		
+		break;
 	}
 	default:
 		break;

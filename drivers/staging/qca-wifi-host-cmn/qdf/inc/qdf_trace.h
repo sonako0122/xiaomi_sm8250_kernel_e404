@@ -1046,18 +1046,18 @@ void qdf_trace_display(void)
 {
 }
 
-static inline
+static __maybe_unused
 int __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
-				char *str_format, ...)
+                                char *str_format, ...)
 {
-	va_list args;
-	int i;
+    va_list args;
+    int i;
 
-	va_start(args, str_format);
-	i = vsnprintf(str_buffer, size, str_format, args);
-	va_end(args);
+    va_start(args, str_format);
+    i = vsnprintf(str_buffer, size, str_format, args);
+    va_end(args);
 
-	return i;
+    return i;
 }
 #endif
 
