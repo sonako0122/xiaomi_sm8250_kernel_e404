@@ -11,19 +11,14 @@
 #include "ksu.h"
 #include "throne_tracker.h"
 
-#ifdef CONFIG_E404_SIGNATURE
-#include <linux/e404_attributes.h>
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs.h>
 #endif
 
 static struct workqueue_struct *ksu_workqueue;
 
 bool ksu_queue_work(struct work_struct *work)
 {
-#ifdef CONFIG_E404_SIGNATURE
-	if (!ksu_workqueue || !work) {
-		return false;
-	}
-#endif
 	return queue_work(ksu_workqueue, work);
 }
 
@@ -46,17 +41,8 @@ extern void ksu_sucompat_exit();
 extern void ksu_ksud_init();
 extern void ksu_ksud_exit();
 
-int __init kernelsu_init(void)
+int __init ksu_kernelsu_init(void)
 {
-#ifdef CONFIG_E404_SIGNATURE
-	if (e404_data.e404_kernelsu == 0) {
-        pr_alert("E404: Soft-disabled KernelSU\n");
-        return 0;
-    } else {
-		pr_alert("E404: Continuing KernelSU initialization\n");
-	}
-#endif
-
 #ifdef CONFIG_KSU_DEBUG
 	pr_alert("*************************************************************");
 	pr_alert("**     NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE    **");
@@ -67,6 +53,10 @@ int __init kernelsu_init(void)
 	pr_alert("*************************************************************");
 #endif
 
+#ifdef CONFIG_KSU_SUSFS
+	susfs_init();
+#endif
+
 	ksu_core_init();
 
 	ksu_workqueue = alloc_ordered_workqueue("kernelsu_work_queue", 0);
@@ -75,7 +65,7 @@ int __init kernelsu_init(void)
 
 	ksu_throne_tracker_init();
 
-#ifdef CONFIG_KSU_WITH_KPROBES
+#ifdef CONFIG_KSU_KPROBES_HOOK
 	ksu_sucompat_init();
 	ksu_ksud_init();
 #else
@@ -90,7 +80,7 @@ int __init kernelsu_init(void)
 	return 0;
 }
 
-void kernelsu_exit(void)
+void ksu_kernelsu_exit(void)
 {
 	ksu_allowlist_exit();
 
@@ -98,7 +88,7 @@ void kernelsu_exit(void)
 
 	destroy_workqueue(ksu_workqueue);
 
-#ifdef CONFIG_KSU_WITH_KPROBES
+#ifdef CONFIG_KSU_KPROBES_HOOK
 	ksu_ksud_exit();
 	ksu_sucompat_exit();
 #endif
@@ -106,8 +96,8 @@ void kernelsu_exit(void)
 	ksu_core_exit();
 }
 
-module_init(kernelsu_init);
-module_exit(kernelsu_exit);
+module_init(ksu_kernelsu_init);
+module_exit(ksu_kernelsu_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("weishu");
