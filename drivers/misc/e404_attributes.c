@@ -3,36 +3,11 @@
 #include <linux/e404_attributes.h>
 
 struct e404_attributes e404_data = {
-    #ifdef CONFIG_E404_KSU_DEFAULT
-    .e404_kernelsu = 1,
-    #else
     .e404_kernelsu = 0,
-    #endif
-
-    #ifdef CONFIG_E404_EFFCPU_DEFAULT
-    .e404_effcpu = 1,
-    #else
     .e404_effcpu = 0,
-    #endif
-
-    #ifdef CONFIG_E404_MIUI_DTBO_DEFAULT
-    .e404_rom_type = 2,
-    #else
     .e404_rom_type = 1,
-    #endif
-
-    #ifdef CONFIG_E404_IR_LOS_DEFAULT
-    .e404_ir_type = 2,
-    #else
     .e404_ir_type = 1,
-    #endif
-
-    #ifdef CONFIG_E404_ALIOTH_5K_BATT_DEFAULT
-    .e404_batt_profile = 2,
-    #else
     .e404_batt_profile = 1,
-    #endif
-
     .e404_dvq_input_boost = 1,
     .e404_cpu_input_boost = 0,
     .e404_kgsl_skip_zeroing = 0,
@@ -44,19 +19,35 @@ struct e404_attributes e404_data = {
 
 static struct kobject *e404_kobj;
 
-int e404_early_kernelsu;
-int e404_early_effcpu;
-int e404_early_rom_type;
-int e404_early_ir_type;
-int e404_early_batt_profile;
+#ifdef CONFIG_E404_KSU_DEFAULT
+int e404_early_kernelsu = 1;
+#else
+int e404_early_kernelsu = 0;
+#endif
 
-static void e404_init_early_values(void) {
-    e404_early_kernelsu     = e404_data.e404_kernelsu;
-    e404_early_effcpu       = e404_data.e404_effcpu;
-    e404_early_rom_type     = e404_data.e404_rom_type;
-    e404_early_ir_type      = e404_data.e404_ir_type;
-    e404_early_batt_profile = e404_data.e404_batt_profile;
-}
+#ifdef CONFIG_E404_EFFCPU_DEFAULT
+int e404_early_effcpu = 1;
+#else
+int e404_early_effcpu = 0;
+#endif
+
+#ifdef CONFIG_E404_MIUI_DTBO_DEFAULT
+int e404_early_rom_type = 2;
+#else
+int e404_early_rom_type = 1;
+#endif
+
+#ifdef CONFIG_E404_IR_LOS_DEFAULT
+int e404_early_ir_type = 2;
+#else
+int e404_early_ir_type = 1;
+#endif
+
+#ifdef CONFIG_E404_ALIOTH_5K_BATT_DEFAULT
+int e404_early_batt_profile = 2;
+#else
+int e404_early_batt_profile = 1;
+#endif
 
 static int __init parse_e404_args(char *str)
 {
@@ -169,7 +160,6 @@ static struct attribute_group e404_attr_group = {
 static int __init e404_init(void) {
     int ret;
 
-    e404_init_early_values();
     e404_parse_attributes();
 
     e404_kobj = kobject_create_and_add("e404", kernel_kobj);
