@@ -33,7 +33,6 @@
 #include <drm/drm_writeback.h>
 #include <linux/sync_file.h>
 #include <linux/devfreq_boost.h>
-#include <linux/cpu_input_boost.h>
 
 #ifdef CONFIG_E404_SIGNATURE
 #include <linux/e404_attributes.h>
@@ -2617,9 +2616,6 @@ int drm_mode_atomic_ioctl(struct drm_device *dev,
 #ifdef CONFIG_E404_SIGNATURE
 		if (e404_data.e404_dvq_input_boost == 1)
 			devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
-
-		if (e404_data.e404_cpu_input_boost == 1)
-			cpu_input_boost_kick();
 #else
 		devfreq_boost_kick(DEVFREQ_CPU_LLCC_DDR_BW);
 #endif	

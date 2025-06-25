@@ -14,7 +14,6 @@ struct e404_attributes {
     int e404_ir_type;
     int e404_batt_profile;
     int e404_dvq_input_boost;
-    int e404_cpu_input_boost;
     int e404_kgsl_skip_zeroing;
     int e404_panel_width;
     int e404_panel_height;
