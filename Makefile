@@ -806,21 +806,11 @@ KBUILD_CFLAGS += -Wno-initializer-overrides
 KBUILD_CFLAGS += -Wnull-dereference
 KBUILD_CFLAGS += $(call cc-option, -Wno-undefined-optimized)
 KBUILD_CFLAGS += $(call cc-option, -Wno-tautological-constant-out-of-range-compare)
-KBUILD_CFLAGS += $(call cc-option, -Wno-tautological-pointer-compare)
 KBUILD_CFLAGS += $(call cc-option, -mllvm -disable-struct-const-merge)
 KBUILD_CFLAGS += $(call cc-disable-warning, builtin-macro-redefined)
 KBUILD_CFLAGS += $(call cc-disable-warning, address-of-packed-member)
 
 KBUILD_CFLAGS += $(call cc-option, -fcatch-undefined-behavior)
-endif
-ifdef CONFIG_CC_IS_GCC
-# Too much noisy and harmless to kill
-KBUILD_CFLAGS += $(call cc-disable-warning, format)
-
-# TODO: Find a fix for below warns
-KBUILD_CFLAGS += $(call cc-disable-warning, address)
-KBUILD_CFLAGS += $(call cc-disable-warning, array-compare)
-KBUILD_CFLAGS += $(call cc-disable-warning, unused-result)
 endif
 
 # These warnings generated too much noise in a regular build.
